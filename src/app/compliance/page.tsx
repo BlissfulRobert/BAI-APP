@@ -9,7 +9,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar, { ComplianceTabType } from "./components/Sidebar";
 import DashboardTab from "./components/DashboardTab";
 import ReviewTab from "./components/ReviewTab";
@@ -45,12 +45,32 @@ export default function CompliancePortalPage() {
   // ------------------------------------------------------------------------------
   // SECTION 2: COMPLIANCE PORTAL STATE
   // ------------------------------------------------------------------------------
-  const [submittedDocs, setSubmittedDocs] = useState<SubmittedDocument[]>(initialSubmittedDocs);
+  const [submittedDocs, setSubmittedDocs] = useState<SubmittedDocument[]>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("new_registrations");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as SubmittedDocument[];
+          return [...initialSubmittedDocs, ...parsed];
+        } catch (e) {
+          console.error("Failed to parse registrations:", e);
+        }
+      }
+    }
+    return initialSubmittedDocs;
+  });
+
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(initialAuditLogs);
   
   // Reused Broker states
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [applications, setApplications] = useState<Application[]>(initialApplications);
+
+  // Sync back to local storage if submitted documents state changes
+  useEffect(() => {
+    const newRegs = submittedDocs.filter(doc => doc.id.startsWith("reg-"));
+    localStorage.setItem("new_registrations", JSON.stringify(newRegs));
+  }, [submittedDocs]);
 
   // Compliance Notifications state log
   const [notifications, setNotifications] = useState([
