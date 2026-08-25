@@ -6,9 +6,9 @@ from django.db import models
 class UserRole(models.TextChoices):
     """System roles assigned to users."""
 
-    ADMIN = "admin", "Admin"
     CLIENT = "client", "Client"
     BROKER = "broker", "Broker"
+    COMPLIANCE = "compliance", "Compliance"
 
 
 class UserStatus(models.TextChoices):
