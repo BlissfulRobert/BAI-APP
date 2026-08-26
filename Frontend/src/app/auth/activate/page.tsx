@@ -77,7 +77,7 @@ export default function ActivatePage() {
   return (
     <Suspense 
       fallback={
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-semibold text-sm">
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-600 font-semibold text-sm">
           Loading Activation Portal...
         </div>
       }
