@@ -19,6 +19,7 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
   // ------------------------------------------------------------------------------
   // FORM FIELDS STATE
   // ------------------------------------------------------------------------------
+  const [role, setRole] = useState<"Client" | "Broker">("Client");
   const [fullName, setFullName] = useState(""); // Asked to link it cleanly to a client
   const [idType, setIdType] = useState("Driver License");
   const [idNumber, setIdNumber] = useState("");
@@ -35,8 +36,13 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
     setErrorMsg("");
 
     // Form Validations
-    if (!fullName.trim() || !idNumber.trim() || !password.trim() || !confirmPassword.trim()) {
-      setErrorMsg("All registration fields are required.");
+    if (!fullName.trim() || !password.trim() || !confirmPassword.trim()) {
+      setErrorMsg("All basic registration fields are required.");
+      return;
+    }
+
+    if (role === "Broker" && !idNumber.trim()) {
+      setErrorMsg("Identity verification details are required for Broker registration.");
       return;
     }
 
@@ -57,19 +63,19 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
       const response = await fetch(`/auth/activate?token=${encodeURIComponent(token)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, idType, idNumber, password })
+        body: JSON.stringify({ fullName, role, idType: role === "Broker" ? idType : "N/A", idNumber: role === "Broker" ? idNumber : "N/A", password })
       }).catch(() => {
         // Since there is no actual live backend node.js listener, this catch is expected.
         // We bypass it for demonstration / client simulation.
         return { ok: true };
       });
 
-      // Prepare simulated SubmittedDocument for Compliance review
+      // Prepare simulated SubmittedDocument for Compliance review if Broker, or custom review
       const newRegistrationReview = {
         id: `reg-${Date.now()}`,
         clientName: fullName,
-        loanType: "Identity Verification",
-        documentName: `${idType} (No. ${idNumber})`,
+        loanType: role === "Broker" ? "Broker Identity Audit" : "Client Registration",
+        documentName: role === "Broker" ? `${idType} (No. ${idNumber})` : "Self-Registered Client Profile",
         dateSubmitted: new Date().toISOString().split("T")[0],
         status: "To Be Reviewed",
         fileSize: "N/A",
@@ -84,7 +90,7 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
       // Artificial loading feel
       setTimeout(() => {
         setIsSubmitting(false);
-        onSuccess(fullName, idType, idNumber);
+        onSuccess(fullName, role === "Broker" ? idType : "N/A", role === "Broker" ? idNumber : "N/A");
       }, 1500);
 
     } catch (e) {
@@ -125,6 +131,37 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
         {/* ---------------------------------------------------------------------- */}
         <form onSubmit={handleSubmit} className="space-y-4">
           
+          {/* Role selector buttons */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+              Register As
+            </label>
+            <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setRole("Client")}
+                className={`py-2 px-3 text-xs font-bold rounded-lg transition-all ${
+                  role === "Client"
+                    ? "bg-[#071644] text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Client
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("Broker")}
+                className={`py-2 px-3 text-xs font-bold rounded-lg transition-all ${
+                  role === "Broker"
+                    ? "bg-[#071644] text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Broker
+              </button>
+            </div>
+          </div>
+
           {/* 1. Full Name Field */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
@@ -141,44 +178,46 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
             </div>
           </div>
 
-          {/* 2. ID Type & ID Number grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
-            {/* ID Type Select Dropdown */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                ID Type
-              </label>
-              <div className="relative">
-                <select
-                  value={idType}
-                  onChange={(e) => setIdType(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#163691] focus:bg-white transition-all font-medium appearance-none cursor-pointer"
-                >
-                  <option value="Driver License">Driver License</option>
-                  <option value="Passport">Passport</option>
-                  <option value="National ID Card">National ID Card</option>
-                  <option value="Medicare Card">Medicare Card</option>
-                </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+          {/* 2. ID Type & ID Number grid (Only rendered if Role is Broker) */}
+          {role === "Broker" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+              
+              {/* ID Type Select Dropdown */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                  ID Type
+                </label>
+                <div className="relative">
+                  <select
+                    value={idType}
+                    onChange={(e) => setIdType(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#163691] focus:bg-white transition-all font-medium appearance-none cursor-pointer"
+                  >
+                    <option value="Driver License">Driver License</option>
+                    <option value="Passport">Passport</option>
+                    <option value="National ID Card">National ID Card</option>
+                    <option value="Medicare Card">Medicare Card</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+                </div>
               </div>
-            </div>
 
-            {/* ID Number input */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                ID Number
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. DL-987654"
-                value={idNumber}
-                onChange={(e) => setIdNumber(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#163691] focus:bg-white transition-all font-medium"
-              />
-            </div>
+              {/* ID Number input */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                  License Number
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. DL-987654"
+                  value={idNumber}
+                  onChange={(e) => setIdNumber(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#163691] focus:bg-white transition-all font-medium"
+                />
+              </div>
 
-          </div>
+            </div>
+          )}
 
           {/* 3. Password & Confirm Password grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
