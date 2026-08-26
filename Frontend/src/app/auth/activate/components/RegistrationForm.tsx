@@ -205,7 +205,7 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
               {/* ID Number input */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                  ID Number
+                  License Number
                 </label>
                 <input
                   type="text"
