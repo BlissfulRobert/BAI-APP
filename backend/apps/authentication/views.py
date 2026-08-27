@@ -14,7 +14,7 @@
 # -----------------------------------------------------------------------
 
 from django.conf import settings
-from rest_framework import generics, status, serializers
+from rest_framework import generics, status, serializers, permissions
 from rest_framework.response import Response
 from dj_rest_auth.views import LoginView as DjRestAuthLoginView
 
@@ -161,7 +161,7 @@ class SendInviteView(generics.CreateAPIView):
     POST /api/auth/invitations/send/
     """
     serializer_class = SendInviteSerializer
-    # permission_classes = [IsComplianceTeam]
+    permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -187,6 +187,7 @@ class InvitationValidateView(generics.GenericAPIView):
     Public endpoint to validate an invitation token.
     GET /api/auth/invitations/validate/?token=<token>
     """
+    permission_classes = [permissions.AllowAny]
     serializer_class = serializers.Serializer # dummy - test
 
     def get(self, request, *args, **kwargs):
@@ -218,6 +219,7 @@ class InvitationAcceptView(generics.GenericAPIView):
     Public endpoint to accept an invitation and set password.
     POST /api/auth/invitations/accept/
     """
+    permission_classes = [permissions.AllowAny]
     serializer_class = InvitationAcceptSerializer
 
     def post(self, request, *args, **kwargs):

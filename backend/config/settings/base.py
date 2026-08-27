@@ -86,7 +86,7 @@ REST_AUTH = {
     "USE_JWT": True,
     "JWT_AUTH_COOKIE": "jwt-access-token",
     "JWT_AUTH_REFRESH_COOKIE": "jwt-refresh-token",
-    "JWT_AUTH_SECURE": True,          # True in prod (HTTPS only)
+    "JWT_AUTH_SECURE": False,          # True in prod (HTTPS only)
     "JWT_AUTH_HTTPONLY": True,       
     "JWT_AUTH_SAMESITE": "Lax",       # CSRF protection
     "JWT_AUTH_RETURN_EXPIRATION": True,
@@ -145,6 +145,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
    "DEFAULT_AUTHENTICATION_CLASSES": (
+       "dj_rest_auth.jwt_auth.JWTCookieAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (

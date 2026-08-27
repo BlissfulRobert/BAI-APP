@@ -3,12 +3,20 @@
  * COMPONENT: ApplicationsTab.tsx
  * Path: src/app/broker/components/ApplicationsTab.tsx
  * Description: Reworked Applications tab with sorting controls, status filters,
- *              row transitions, and a Top Right "Send Email" redirection button.
+ *              row transitions, and invite/document modals wired to backend.
  * ==============================================================================
  */
 
 import React, { useState } from "react";
-import { Search, Eye, Mail, ArrowUpDown, Filter, X, Link } from "lucide-react";
+import {
+  Search,
+  Eye,
+  Mail,
+  ArrowUpDown,
+  Filter,
+  X,
+  FileText,
+} from "lucide-react";
 import { Application, Client } from "../MockData";
 import ClientApplicationDashboard from "./ClientApplicationDashboard";
 
@@ -21,98 +29,200 @@ interface ApplicationsTabProps {
   setClients?: React.Dispatch<React.SetStateAction<Client[]>>;
 }
 
-type SortCriteria = "none" | "name-asc" | "name-desc" | "amount-low" | "amount-high" | "progress-low" | "progress-high";
+type SortCriteria =
+  | "none"
+  | "name-asc"
+  | "name-desc"
+  | "amount-low"
+  | "amount-high"
+  | "progress-low"
+  | "progress-high";
 
-export default function ApplicationsTab({ clients, applications, setApplications, onSendEmail, variant, setClients }: ApplicationsTabProps) {
-  // Theme variants configuration
+const STATUS_OPTIONS: Application["status"][] = [
+  "Submitted",
+  "In review",
+  "Action needed",
+  "Approved",
+  "Settled",
+  "Declined",
+];
+
+const DOCUMENT_OPTIONS = [
+  "Government ID (Passport / Driver License)",
+  "Proof of Income (Recent Payslips)",
+  "Bank Statements (Last 3 Months)",
+  "Tax Documents (Notice of Assessment)",
+  "Employment Contract",
+  "Business Documents (For Self-Employed)",
+  "Collateral & Assets Proof",
+  "Other Supporting Evidence",
+];
+
+export default function ApplicationsTab({
+  clients,
+  applications,
+  setApplications,
+  onSendEmail,
+  variant,
+  setClients,
+}: ApplicationsTabProps) {
+  // ------------------------------------------------------------------------------
+  // THEME VARIANTS
+  // ------------------------------------------------------------------------------
   const isCompliance = variant === "compliance";
+  const primaryBg = isCompliance
+    ? "bg-[#1429A9] hover:bg-[#10218A]"
+    : "bg-[#0B2369] hover:bg-[#071644]";
+  const primaryText = isCompliance ? "text-[#1429A9]" : "text-[#0B2369]";
+  const primaryBorder = isCompliance
+    ? "focus:border-[#1429A9]/30"
+    : "focus:border-[#0B2369]/30";
+  const barBg = isCompliance ? "bg-[#1429A9]" : "bg-[#0B2369]";
+  const shadowBg = isCompliance ? "shadow-[#1429A9]/10" : "shadow-[#0B2369]/10";
+  const hoverBg = isCompliance ? "hover:bg-[#1429A9]" : "hover:bg-[#0B2369]";
 
-  // Invite Client state variables
+  // ------------------------------------------------------------------------------
+  // INVITE MODAL STATE
+  // ------------------------------------------------------------------------------
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
-  const [isCopied, setIsCopied] = useState(false);
+  const [inviteRole, setInviteRole] = useState<"client" | "broker">("client");
+  const [inviteStatus, setInviteStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [inviteError, setInviteError] = useState("");
 
-  // Document Request state variables
+  const openInviteModal = () => {
+    setInviteEmail("");
+    setInviteRole("client");
+    setInviteStatus("idle");
+    setInviteError("");
+    setIsInviteOpen(true);
+  };
+
+  const handleSendInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+
+    setInviteStatus("loading");
+    setInviteError("");
+
+    try {
+      const res = await fetch(
+        "http://localhost:8000/api/auth/invitations/send/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        let errorMessage = "Failed to send invitation.";
+
+        // Helper to safely extract string whether it's a string, array, or object
+        const parseDRFError = (val: any): string => {
+          if (!val) return "";
+          if (typeof val === "string") return val;
+          if (Array.isArray(val))
+            return typeof val[0] === "string" ? val[0] : JSON.stringify(val[0]);
+          if (typeof val === "object")
+            return parseDRFError(Object.values(val)[0]);
+          return String(val);
+        };
+
+        if (typeof data === "string") {
+          errorMessage = data;
+        } else if (data.email) {
+          errorMessage = parseDRFError(data.email);
+        } else if (data.role) {
+          errorMessage = parseDRFError(data.role);
+        } else if (data.non_field_errors) {
+          errorMessage = parseDRFError(data.non_field_errors);
+        } else if (data.detail) {
+          errorMessage = parseDRFError(data.detail);
+        } else if (data.error) {
+          errorMessage = parseDRFError(data.error);
+        } else {
+          const firstKey = Object.keys(data)[0];
+          errorMessage = `${firstKey}: ${parseDRFError(data[firstKey])}`;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      setInviteStatus("success");
+    } catch (err: any) {
+      setInviteError(err.message || "Something went wrong.");
+      setInviteStatus("error");
+    }
+  };
+
+  // ------------------------------------------------------------------------------
+  // DOCUMENT REQUEST MODAL STATE
+  // ------------------------------------------------------------------------------
   const [isRequestDocOpen, setIsRequestDocOpen] = useState(false);
   const [requestClient, setRequestClient] = useState("");
   const [requestDocType, setRequestDocType] = useState("");
   const [requestNotes, setRequestNotes] = useState("");
 
-  const documentOptions = [
-    "Government ID (Passport / Driver License)",
-    "Proof of Income (Recent Payslips)",
-    "Bank Statements (Last 3 Months)",
-    "Tax Documents (Notice of Assessment)",
-    "Employment Contract",
-    "Business Documents (For Self-Employed)",
-    "Collateral & Assets Proof",
-    "Other Supporting Evidence"
-  ];
-
   const handleSendRequest = (e: React.FormEvent) => {
     e.preventDefault();
-    const matchedClient = clients.find(c => c.id === requestClient);
+    const matchedClient = clients.find((c) => c.id === requestClient);
     if (!matchedClient || !requestDocType) return;
-    alert(`Document request sent to ${matchedClient.name} (${matchedClient.email})!\nDocument Requested: ${requestDocType}\nMessage: ${requestNotes || "None"}`);
+
+    alert(
+      `Document request sent to ${matchedClient.name} (${matchedClient.email})!\n` +
+        `Document Requested: ${requestDocType}\n` +
+        `Message: ${requestNotes || "None"}`,
+    );
+
     setIsRequestDocOpen(false);
     setRequestClient("");
     setRequestDocType("");
     setRequestNotes("");
   };
 
-  const openInviteModal = () => {
-    setInviteCode(Math.random().toString(36).substring(2, 10));
-    setInviteEmail("");
-    setIsCopied(false);
-    setIsInviteOpen(true);
-  };
-
-  const handleCopyLink = () => {
-    const linkText = `http://localhost:3000/auth/activate?token=cli-${inviteCode}`;
-    navigator.clipboard.writeText(linkText);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  const handleSendInvite = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail.trim()) return;
-    alert(`Client invitation successfully sent to ${inviteEmail}!\nInvite Code: cli-${inviteCode}`);
-    setIsInviteOpen(false);
-  };
-
-  // Edit Status & Progress states
-  const [activeStatusEditId, setActiveStatusEditId] = useState<string | null>(null);
-  const [activeProgressEditId, setActiveProgressEditId] = useState<string | null>(null);
+  // ------------------------------------------------------------------------------
+  // EDIT STATUS & PROGRESS STATE
+  // ------------------------------------------------------------------------------
+  const [activeStatusEditId, setActiveStatusEditId] = useState<string | null>(
+    null,
+  );
+  const [activeProgressEditId, setActiveProgressEditId] = useState<
+    string | null
+  >(null);
   const [progressInputValue, setProgressInputValue] = useState<number>(0);
 
-  const handleUpdateStatus = (appId: string, newStatus: Application["status"]) => {
+  const handleUpdateStatus = (
+    appId: string,
+    newStatus: Application["status"],
+  ) => {
     setApplications((prev) =>
-      prev.map((app) => (app.id === appId ? { ...app, status: newStatus } : app))
+      prev.map((app) =>
+        app.id === appId ? { ...app, status: newStatus } : app,
+      ),
     );
     setActiveStatusEditId(null);
   };
 
   const handleUpdateProgress = (appId: string, newProgress: number) => {
     setApplications((prev) =>
-      prev.map((app) => (app.id === appId ? { ...app, progress: newProgress } : app))
+      prev.map((app) =>
+        app.id === appId ? { ...app, progress: newProgress } : app,
+      ),
     );
     setActiveProgressEditId(null);
   };
-  const primaryBg = isCompliance ? "bg-[#1429A9] hover:bg-[#10218A]" : "bg-[#0B2369] hover:bg-[#071644]";
-  const primaryText = isCompliance ? "text-[#1429A9]" : "text-[#0B2369]";
-  const primaryBorder = isCompliance ? "focus:border-[#1429A9]/30" : "focus:border-[#0B2369]/30";
-  const barBg = isCompliance ? "bg-[#1429A9]" : "bg-[#0B2369]";
-  const shadowBg = isCompliance ? "shadow-[#1429A9]/10" : "shadow-[#0B2369]/10";
-  const hoverBg = isCompliance ? "hover:bg-[#1429A9]" : "hover:bg-[#0B2369]";
+
   // ------------------------------------------------------------------------------
-  // STATE DEFINITIONS
+  // SEARCH / SORT / FILTER STATE
   // ------------------------------------------------------------------------------
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-  
-  // Sorting and Filtering states
   const [sortOption, setSortOption] = useState<SortCriteria>("none");
   const [statusFilter, setStatusFilter] = useState<string>("All");
 
@@ -121,47 +231,40 @@ export default function ApplicationsTab({ clients, applications, setApplications
   // ------------------------------------------------------------------------------
   const processedApps = applications
     .filter((app) => {
-      // 1. Text Search matching
-      const matchesSearch = 
-        app.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.type.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      // 2. Status matching (mapping 'Action needed' properly)
-      const matchesStatus = 
-        statusFilter === "All" || 
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        app.clientName.toLowerCase().includes(query) ||
+        app.id.toLowerCase().includes(query) ||
+        app.type.toLowerCase().includes(query);
+      const matchesStatus =
+        statusFilter === "All" ||
         app.status.toLowerCase() === statusFilter.toLowerCase();
-
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      // 3. Sorting computations
-      if (sortOption === "name-asc") {
-        return a.clientName.localeCompare(b.clientName);
+      switch (sortOption) {
+        case "name-asc":
+          return a.clientName.localeCompare(b.clientName);
+        case "name-desc":
+          return b.clientName.localeCompare(a.clientName);
+        case "amount-low":
+          return a.amount - b.amount;
+        case "amount-high":
+          return b.amount - a.amount;
+        case "progress-low":
+          return a.progress - b.progress;
+        case "progress-high":
+          return b.progress - a.progress;
+        default:
+          return 0;
       }
-      if (sortOption === "name-desc") {
-        return b.clientName.localeCompare(a.clientName);
-      }
-      if (sortOption === "amount-low") {
-        return a.amount - b.amount;
-      }
-      if (sortOption === "amount-high") {
-        return b.amount - a.amount;
-      }
-      if (sortOption === "progress-low") {
-        return a.progress - b.progress;
-      }
-      if (sortOption === "progress-high") {
-        return b.progress - a.progress;
-      }
-      return 0; // Default none
     });
 
   // ------------------------------------------------------------------------------
-  // INTERACTIVE TRANSITION: DETAILS REDIRECT
+  // DETAIL VIEW TRANSITION
   // ------------------------------------------------------------------------------
   if (selectedApp) {
-    const matchedClient = clients.find(c => c.id === selectedApp.clientId);
+    const matchedClient = clients.find((c) => c.id === selectedApp.clientId);
     if (matchedClient) {
       return (
         <ClientApplicationDashboard
@@ -170,7 +273,11 @@ export default function ApplicationsTab({ clients, applications, setApplications
           variant={variant}
           onUpdateClient={(updatedClient) => {
             if (setClients) {
-              setClients((prev) => prev.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+              setClients((prev) =>
+                prev.map((c) =>
+                  c.id === updatedClient.id ? updatedClient : c,
+                ),
+              );
             }
           }}
         />
@@ -180,51 +287,47 @@ export default function ApplicationsTab({ clients, applications, setApplications
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      
       {/* ==================================================================== */}
-      {/* SECTION 1: HEADER & TOP-RIGHT REDIRECT SEND EMAIL BUTTON             */}
+      {/* SECTION 1: HEADER & ACTION BUTTONS                                   */}
       {/* ==================================================================== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-800">Submitted Document Applications</h2>
+          <h2 className="text-xl font-extrabold text-slate-800">
+            Submitted Document Applications
+          </h2>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
-            Review dossier packages, check file progress, and progress applications to final approval.
+            Review dossier packages, check file progress, and progress
+            applications to final approval.
           </p>
         </div>
 
-        {/* Top-Right Action Buttons */}
         <div className="flex items-center gap-3 self-start sm:self-auto">
-          {isCompliance && (
-            <button
-              onClick={openInviteModal}
-              className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white transition-all ${primaryBg} shadow-md ${shadowBg}`}
-            >
-              <Mail className="w-4 h-4" />
-              <span>Invite Client</span>
-            </button>
-          )}
+          {/* Invite button — visible for both compliance and broker */}
+          <button
+            onClick={openInviteModal}
+            className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white transition-all ${primaryBg} shadow-md ${shadowBg}`}
+          >
+            <Mail className="w-4 h-4" />
+            <span>{isCompliance ? "Send Invitation" : "Invite Client"}</span>
+          </button>
 
           <button
             onClick={() => {
-              if (clients.length > 0) {
-                setRequestClient(clients[0].id);
-              }
+              if (clients.length > 0) setRequestClient(clients[0].id);
               setIsRequestDocOpen(true);
             }}
             className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white transition-all ${primaryBg} shadow-md ${shadowBg}`}
           >
-            <Mail className="w-4 h-4" />
+            <FileText className="w-4 h-4" />
             <span>Request Documents</span>
           </button>
         </div>
       </div>
 
       {/* ==================================================================== */}
-      {/* SECTION 2: SEARCH & DYNAMIC SORTING CONTROLS                        */}
+      {/* SECTION 2: SEARCH & SORT CONTROLS                                    */}
       {/* ==================================================================== */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 p-4 bg-white border border-slate-200/60 rounded-3xl shadow-soft-xl">
-        
-        {/* Search Query */}
         <div className="md:col-span-5 relative">
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
@@ -236,7 +339,6 @@ export default function ApplicationsTab({ clients, applications, setApplications
           />
         </div>
 
-        {/* Sorting Category selector */}
         <div className="md:col-span-4 flex items-center gap-2">
           <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <select
@@ -254,7 +356,6 @@ export default function ApplicationsTab({ clients, applications, setApplications
           </select>
         </div>
 
-        {/* Status Filtering selector */}
         <div className="md:col-span-3 flex items-center gap-2">
           <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <select
@@ -271,11 +372,10 @@ export default function ApplicationsTab({ clients, applications, setApplications
             <option value="Declined">Declined</option>
           </select>
         </div>
-
       </div>
 
       {/* ==================================================================== */}
-      {/* SECTION 3: FULL WIDTH LIST TABLE                                    */}
+      {/* SECTION 3: APPLICATIONS TABLE                                        */}
       {/* ==================================================================== */}
       <div className="bg-white border border-slate-200/80 rounded-3xl shadow-soft-xl overflow-hidden">
         <div className="overflow-x-auto">
@@ -292,95 +392,112 @@ export default function ApplicationsTab({ clients, applications, setApplications
             <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
               {processedApps.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400 font-medium">
+                  <td
+                    colSpan={5}
+                    className="py-12 text-center text-slate-400 font-medium"
+                  >
                     No applications matched sorting or filtering rules.
                   </td>
                 </tr>
               ) : (
                 processedApps.map((app) => (
-                  <tr 
-                    key={app.id} 
+                  <tr
+                    key={app.id}
                     onClick={() => setSelectedApp(app)}
                     className="hover:bg-slate-50/40 cursor-pointer transition-colors"
                   >
                     {/* ID & Client */}
                     <td className="py-4 px-6 font-medium">
-                      <div>
-                        <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/40 inline-block mb-1">
-                          {app.id}
-                        </span>
-                        <span className="text-slate-800 font-bold block">{app.clientName}</span>
-                      </div>
+                      <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/40 inline-block mb-1">
+                        {app.id}
+                      </span>
+                      <span className="text-slate-800 font-bold block">
+                        {app.clientName}
+                      </span>
                     </td>
 
                     {/* Type & Amount */}
                     <td className="py-4 px-6">
-                      <div>
-                        <span className="text-slate-600 block">{app.type}</span>
-                        <span className={`font-extrabold block ${primaryText}`}>${app.amount.toLocaleString()}</span>
-                      </div>
+                      <span className="text-slate-600 block">{app.type}</span>
+                      <span className={`font-extrabold block ${primaryText}`}>
+                        ${app.amount.toLocaleString()}
+                      </span>
                     </td>
 
                     {/* Progress Bar */}
-                    <td 
+                    <td
                       className="py-4 px-6 relative"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setActiveProgressEditId(activeProgressEditId === app.id ? null : app.id);
+                        setActiveProgressEditId(
+                          activeProgressEditId === app.id ? null : app.id,
+                        );
                         setProgressInputValue(app.progress);
                         setActiveStatusEditId(null);
                       }}
                     >
-                      <div className="space-y-1 cursor-pointer hover:ring-2 hover:ring-[#1429A9]/30 p-1 rounded-lg transition-all">
+                      <div className="space-y-1 cursor-pointer hover:ring-2 hover:ring-slate-200 p-1 rounded-lg transition-all">
                         <div className="w-28 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-                          <div 
+                          <div
                             className={`h-full rounded-full ${barBg}`}
                             style={{ width: `${app.progress}%` }}
                           />
                         </div>
-                        <span className="text-[10px] text-slate-400 font-bold block">{app.progress}% Dossier Uploaded</span>
+                        <span className="text-[10px] text-slate-400 font-bold block">
+                          {app.progress}% Dossier Uploaded
+                        </span>
                       </div>
 
-                      {/* Progress Popover */}
                       {activeProgressEditId === app.id && (
                         <>
-                          <div 
-                            className="fixed inset-0 z-20 cursor-default" 
+                          <div
+                            className="fixed inset-0 z-20 cursor-default"
                             onClick={(e) => {
                               e.stopPropagation();
                               setActiveProgressEditId(null);
                             }}
                           />
-                          <div 
+                          <div
                             className="absolute left-6 top-14 bg-white border border-slate-200/80 rounded-2xl shadow-xl z-30 p-4 w-48 space-y-3.5 animate-scaleIn text-left"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
                               Update Progress
                             </span>
-                            
                             <div className="space-y-2">
-                              <input 
-                                type="range" 
-                                min="0" 
-                                max="100" 
-                                value={progressInputValue} 
-                                onChange={(e) => setProgressInputValue(parseInt(e.target.value))}
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={progressInputValue}
+                                onChange={(e) =>
+                                  setProgressInputValue(
+                                    parseInt(e.target.value),
+                                  )
+                                }
                                 className="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#1429A9]"
                               />
-                              
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-[10px] font-extrabold text-slate-500">{progressInputValue}%</span>
+                                <span className="text-[10px] font-extrabold text-slate-500">
+                                  {progressInputValue}%
+                                </span>
                                 <div className="flex gap-1.5">
                                   <button
-                                    onClick={() => setActiveProgressEditId(null)}
+                                    onClick={() =>
+                                      setActiveProgressEditId(null)
+                                    }
                                     className="px-2 py-1 border border-slate-200 rounded-lg text-[9px] font-bold text-slate-400 hover:bg-slate-50"
                                   >
                                     Cancel
                                   </button>
                                   <button
-                                    onClick={() => handleUpdateProgress(app.id, progressInputValue)}
-                                    className={`px-2.5 py-1 text-white rounded-lg text-[9px] font-bold ${primaryBg} shadow-xs`}
+                                    onClick={() =>
+                                      handleUpdateProgress(
+                                        app.id,
+                                        progressInputValue,
+                                      )
+                                    }
+                                    className={`px-2.5 py-1 text-white rounded-lg text-[9px] font-bold ${primaryBg}`}
                                   >
                                     Save
                                   </button>
@@ -393,31 +510,36 @@ export default function ApplicationsTab({ clients, applications, setApplications
                     </td>
 
                     {/* Status */}
-                    <td 
+                    <td
                       className="py-4 px-6 relative"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setActiveStatusEditId(activeStatusEditId === app.id ? null : app.id);
+                        setActiveStatusEditId(
+                          activeStatusEditId === app.id ? null : app.id,
+                        );
                         setActiveProgressEditId(null);
                       }}
                     >
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider cursor-pointer hover:ring-2 hover:ring-[#1429A9]/30 transition-all ${
-                        app.status === "Action needed"
-                          ? "bg-rose-50 text-rose-600 border border-rose-200"
-                          : app.status === "In review"
-                          ? "bg-blue-50 text-blue-600 border border-blue-200"
-                          : app.status === "Approved"
-                          ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                          : "bg-slate-50 text-slate-600 border border-slate-200"
-                      }`}>
-                        {app.status === "Action needed" ? "Action Required" : app.status}
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider cursor-pointer hover:ring-2 hover:ring-slate-200 transition-all ${
+                          app.status === "Action needed"
+                            ? "bg-rose-50 text-rose-600 border border-rose-200"
+                            : app.status === "In review"
+                              ? "bg-blue-50 text-blue-600 border border-blue-200"
+                              : app.status === "Approved"
+                                ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                                : "bg-slate-50 text-slate-600 border border-slate-200"
+                        }`}
+                      >
+                        {app.status === "Action needed"
+                          ? "Action Required"
+                          : app.status}
                       </span>
 
-                      {/* Dropdown Popover */}
                       {activeStatusEditId === app.id && (
                         <>
-                          <div 
-                            className="fixed inset-0 z-20 cursor-default" 
+                          <div
+                            className="fixed inset-0 z-20 cursor-default"
                             onClick={(e) => {
                               e.stopPropagation();
                               setActiveStatusEditId(null);
@@ -427,12 +549,12 @@ export default function ApplicationsTab({ clients, applications, setApplications
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-1">
                               Select Status
                             </span>
-                            {["Submitted", "In review", "Action needed", "Approved", "Settled", "Declined"].map((status) => (
+                            {STATUS_OPTIONS.map((status) => (
                               <button
                                 key={status}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleUpdateStatus(app.id, status as Application["status"]);
+                                  handleUpdateStatus(app.id, status);
                                 }}
                                 className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
                                   app.status === status
@@ -440,7 +562,9 @@ export default function ApplicationsTab({ clients, applications, setApplications
                                     : "hover:bg-slate-50 text-slate-600"
                                 }`}
                               >
-                                {status === "Action needed" ? "Action Required" : status}
+                                {status === "Action needed"
+                                  ? "Action Required"
+                                  : status}
                               </button>
                             ))}
                           </div>
@@ -449,7 +573,10 @@ export default function ApplicationsTab({ clients, applications, setApplications
                     </td>
 
                     {/* View Action */}
-                    <td className="py-4 px-6 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className="py-4 px-6 text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         onClick={() => setSelectedApp(app)}
                         className={`p-2 bg-slate-100 rounded-xl border border-slate-200/60 text-slate-500 transition-all ${hoverBg} hover:text-white`}
@@ -467,112 +594,218 @@ export default function ApplicationsTab({ clients, applications, setApplications
       </div>
 
       {/* ==================================================================== */}
-      {/* SECTION 4: INVITE CLIENT POPUP MODAL WINDOW                          */}
+      {/* SECTION 4: INVITE MODAL — Wired to real backend                      */}
       {/* ==================================================================== */}
       {isInviteOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200/50 space-y-6 relative overflow-hidden animate-scaleIn">
-            
-            {/* Exit button on the top right */}
-            <button 
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200/50 space-y-5 relative animate-scaleIn">
+            {/* Close */}
+            <button
               onClick={() => setIsInviteOpen(false)}
               className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 border border-slate-200/50 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* Modal Header */}
+            {/* Header */}
             <div>
-              <span className={`text-[10px] font-extrabold ${primaryText} uppercase tracking-wider block`}>
-                {isCompliance ? "Compliance Portal Utilities" : "Broker Portal Utilities"}
+              <span
+                className={`text-[10px] font-extrabold ${primaryText} uppercase tracking-wider block`}
+              >
+                {isCompliance ? "Compliance Portal" : "Broker Portal"} · Send
+                Invitation
               </span>
               <h3 className="text-base font-extrabold text-slate-800 mt-0.5">
-                Invite Client to Hub
+                Invite to BAI Finance
               </h3>
+              <p className="text-xs text-slate-400 font-medium mt-1 leading-relaxed">
+                An activation link will be emailed directly. They set their own
+                password upon activation.
+              </p>
             </div>
 
-            {/* Link Box Section */}
-            {!isCompliance && (
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Shareable Registration Link
-                </label>
-                
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs font-semibold text-slate-600 truncate select-all flex items-center gap-1.5">
-                    <Link className={`w-3.5 h-3.5 ${primaryText} shrink-0`} />
-                    <span className="truncate">http://localhost:3000/auth/activate?token=cli-{inviteCode}</span>
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={handleCopyLink}
-                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl border border-slate-200 transition-colors shrink-0"
+            {/* SUCCESS STATE */}
+            {inviteStatus === "success" ? (
+              <div className="py-6 flex flex-col items-center text-center space-y-4">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                  <svg
+                    className="w-7 h-7 text-emerald-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
                   >
-                    {isCopied ? "Copied" : "Copy"}
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-extrabold text-slate-800">
+                    Invitation Sent!
+                  </p>
+                  <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                    An activation link was sent to{" "}
+                    <span className="font-bold text-slate-700">
+                      {inviteEmail}
+                    </span>{" "}
+                    as a{" "}
+                    <span className={`font-bold capitalize ${primaryText}`}>
+                      {inviteRole}
+                    </span>
+                    .
+                  </p>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={openInviteModal}
+                    className="px-4 py-2 text-[10px] font-extrabold uppercase tracking-wider rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all"
+                  >
+                    Send Another
+                  </button>
+                  <button
+                    onClick={() => setIsInviteOpen(false)}
+                    className={`px-4 py-2 text-[10px] font-extrabold uppercase tracking-wider rounded-xl ${primaryBg} text-white shadow-md transition-all`}
+                  >
+                    Done
                   </button>
                 </div>
               </div>
+            ) : (
+              <form onSubmit={handleSendInvite} className="space-y-4">
+                {/* Role Toggle — Compliance sees both; Broker always invites clients */}
+                {isCompliance ? (
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Invite As
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setInviteRole("client")}
+                        className={`py-2 px-3 text-xs font-bold rounded-lg transition-all ${
+                          inviteRole === "client"
+                            ? `${primaryBg} text-white shadow-sm`
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        Client
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInviteRole("broker")}
+                        className={`py-2 px-3 text-xs font-bold rounded-lg transition-all ${
+                          inviteRole === "broker"
+                            ? `${primaryBg} text-white shadow-sm`
+                            : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        Broker
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    <Mail className={`w-3.5 h-3.5 ${primaryText}`} />
+                    <span className="text-xs text-slate-500 font-medium">
+                      Inviting as{" "}
+                      <span className={`font-bold ${primaryText}`}>Client</span>
+                    </span>
+                  </div>
+                )}
+
+                {/* Email Input */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder={`Enter ${inviteRole} email (e.g. emma@example.com)`}
+                    value={inviteEmail}
+                    onChange={(e) => {
+                      setInviteEmail(e.target.value);
+                      setInviteError("");
+                    }}
+                    className={`w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none transition-all ${
+                      inviteStatus === "error"
+                        ? "border-rose-300 focus:border-rose-400"
+                        : `border-slate-200 ${primaryBorder}`
+                    }`}
+                  />
+                </div>
+
+                {/* Error */}
+                {inviteStatus === "error" && inviteError && (
+                  <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs font-semibold text-rose-600">
+                    <X className="w-3.5 h-3.5 shrink-0" />
+                    <span>{inviteError}</span>
+                  </div>
+                )}
+
+                {/* Note */}
+                <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                  The link expires in{" "}
+                  <strong className="text-slate-500">7 days</strong>. If unused,
+                  you can resend from the invitation manager.
+                </p>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsInviteOpen(false)}
+                    className="py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 text-[10px] font-extrabold uppercase tracking-wider transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={inviteStatus === "loading"}
+                    className={`py-2.5 px-5 ${primaryBg} text-white rounded-xl shadow-md ${shadowBg} text-[10px] font-extrabold uppercase tracking-wider transition-all flex items-center gap-2 disabled:opacity-60`}
+                  >
+                    {inviteStatus === "loading" ? (
+                      <>
+                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>Send Invite</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             )}
-
-            {/* Email Input Option Form */}
-            <form onSubmit={handleSendInvite} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Invite via Email Address
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="Enter client's email address (e.g. emma@example.com)"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className={`w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:outline-none ${primaryBorder} rounded-xl text-xs font-medium text-slate-700 placeholder:text-slate-400`}
-                />
-              </div>
-
-              {/* Operations: Invite Client at Bottom Right, Cancel on Left */}
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 text-[10px] font-extrabold uppercase">
-                <button
-                  type="button"
-                  onClick={() => setIsInviteOpen(false)}
-                  className="py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className={`py-2.5 px-5 ${primaryBg} text-white rounded-xl shadow-md ${shadowBg} transition-all`}
-                >
-                  Invite Client
-                </button>
-              </div>
-            </form>
-
           </div>
         </div>
       )}
 
       {/* ==================================================================== */}
-      {/* SECTION 5: REQUEST DOCUMENTS MODAL WINDOW                            */}
+      {/* SECTION 5: REQUEST DOCUMENTS MODAL                                   */}
       {/* ==================================================================== */}
       {isRequestDocOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200/50 space-y-6 relative overflow-hidden animate-scaleIn">
-            
-            {/* Exit button on the top right */}
-            <button 
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200/50 space-y-6 relative animate-scaleIn">
+            {/* Close */}
+            <button
               onClick={() => setIsRequestDocOpen(false)}
               className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 border border-slate-200/50 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* Modal Header */}
+            {/* Header */}
             <div>
-              <span className={`text-[10px] font-extrabold ${primaryText} uppercase tracking-wider block`}>
-                Broker Action Center
+              <span
+                className={`text-[10px] font-extrabold ${primaryText} uppercase tracking-wider block`}
+              >
+                {isCompliance ? "Compliance" : "Broker"} Action Center
               </span>
               <h3 className="text-base font-extrabold text-slate-800 mt-0.5">
                 Request Supporting Documents
@@ -581,8 +814,6 @@ export default function ApplicationsTab({ clients, applications, setApplications
 
             {/* Form */}
             <form onSubmit={handleSendRequest} className="space-y-4">
-              
-              {/* Select Client */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Select Client
@@ -602,7 +833,6 @@ export default function ApplicationsTab({ clients, applications, setApplications
                 </select>
               </div>
 
-              {/* Select Document Type */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Select Document Type
@@ -614,7 +844,7 @@ export default function ApplicationsTab({ clients, applications, setApplications
                   className={`w-full px-4 py-2.5 bg-slate-50 border border-slate-200 focus:outline-none ${primaryBorder} rounded-xl text-xs font-semibold text-slate-700`}
                 >
                   <option value="">Select document category...</option>
-                  {documentOptions.map((opt) => (
+                  {DOCUMENT_OPTIONS.map((opt) => (
                     <option key={opt} value={opt}>
                       {opt}
                     </option>
@@ -622,13 +852,12 @@ export default function ApplicationsTab({ clients, applications, setApplications
                 </select>
               </div>
 
-              {/* Email Notes Area */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Additional Email Context (Notes)
+                  Additional Notes
                 </label>
                 <textarea
-                  placeholder="Provide details on the specific requirements or instructions for this document..."
+                  placeholder="Provide details or specific instructions for this document request..."
                   value={requestNotes}
                   onChange={(e) => setRequestNotes(e.target.value)}
                   rows={4}
@@ -636,7 +865,6 @@ export default function ApplicationsTab({ clients, applications, setApplications
                 />
               </div>
 
-              {/* Operations */}
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 text-[10px] font-extrabold uppercase">
                 <button
                   type="button"
@@ -645,7 +873,6 @@ export default function ApplicationsTab({ clients, applications, setApplications
                 >
                   Cancel
                 </button>
-
                 <button
                   type="submit"
                   className={`py-2.5 px-5 ${primaryBg} text-white rounded-xl shadow-md ${shadowBg} transition-all`}
@@ -654,7 +881,6 @@ export default function ApplicationsTab({ clients, applications, setApplications
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       )}

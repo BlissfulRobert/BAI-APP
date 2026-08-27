@@ -57,19 +57,39 @@ class ComplianceAccountCreateSerializer(serializers.Serializer):
 
 class SendInviteSerializer(serializers.Serializer):
     """
-    Serializer for Compliance to send an invitation email
+    Serializer for Compliance/Brokers to send an invitation email
     to either a broker or a client.
 
-    Compliance only provides:
-      - email
-      - role ('broker' or 'client')
-
-    The invitee will provide all personal details when accepting.
+    Validation rules:
+        - Email must be valid format.
+        - Role must be 'broker' or 'client'.
+        - Email cannot belong to an account with a different role.
+        - Email cannot belong to an account that is already active/registered.
     """
     email = serializers.EmailField()
     role = serializers.ChoiceField(
-        choices=[(UserRole.BROKER, "Broker"), (UserRole.CLIENT, "Client")]
+    choices=[(UserRole.BROKER, "Broker"), (UserRole.CLIENT, "Client")]
     )
+
+    def validate(self, attrs):
+        email = attrs["email"].strip().lower()
+        role = attrs["role"]
+        attrs["email"] = email
+
+        try:
+            user = User.objects.get(email=email)
+            if user.role != role:
+                 raise serializers.ValidationError(
+                     {"email": f"A user with this email already exists as a '{user.role}'."}
+                )
+            if user.is_active:
+                raise serializers.ValidationError(
+                    {"email": "This account is already registered and active."}
+                )
+        except User.DoesNotExist:
+            pass
+
+        return attrs
 
     def create(self, validated_data, actor=None):
         """
@@ -81,13 +101,8 @@ class SendInviteSerializer(serializers.Serializer):
         role = validated_data["role"]
 
         with transaction.atomic():
-            # Reuse existing user if present and role matches
             try:
                 user = User.objects.get(email=email)
-                if user.role != role:
-                    raise serializers.ValidationError(
-                        {"email": f"A user with this email already exists but is not a {role}."}
-                    )
             except User.DoesNotExist:
                 user = User.objects.create_user(
                     email=email,
@@ -96,7 +111,8 @@ class SendInviteSerializer(serializers.Serializer):
                     status=UserStatus.INACTIVE,
                     is_active=False,
                     invited_by=actor
-            )
+                )
+
             # Revoke previous pending invitations for safety
             Invitation.objects.filter(user=user, status=InviteStatus.PENDING).update(status=InviteStatus.REVOKED)
 
