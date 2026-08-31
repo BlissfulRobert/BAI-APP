@@ -70,12 +70,23 @@ class SendInviteSerializer(serializers.Serializer):
     role = serializers.ChoiceField(
     choices=[(UserRole.BROKER, "Broker"), (UserRole.CLIENT, "Client")]
     )
+    broker_id = serializers.UUIDField(required=False, allow_null=True)
 
     def validate(self, attrs):
         email = attrs["email"].strip().lower()
         role = attrs["role"]
+        broker_id = attrs.get("broker_id")
         attrs["email"] = email
 
+        if role == UserRole.CLIENT:
+            if not broker_id:
+                raise serializers.ValidationError(
+                    {"broker_id": "A corresponding broker is required when creating a client account."}
+                )
+            if not User.objects.filter(id=broker_id, role=UserRole.BROKER, is_active=True).exists():
+                raise serializers.ValidationError(
+                     {"broker_id": "Selected broker does not exist or is inactive."}
+                )
         try:
             user = User.objects.get(email=email)
             if user.role != role:
@@ -99,6 +110,12 @@ class SendInviteSerializer(serializers.Serializer):
         """
         email = validated_data["email"]
         role = validated_data["role"]
+        broker_id = validated_data.get("broker_id")
+        # Link client directly to the corresponding broker
+
+        assigned_broker = None
+        if role == UserRole.CLIENT and broker_id:
+            assigned_broker = User.objects.get(id=broker_id)
 
         with transaction.atomic():
             try:
@@ -110,12 +127,11 @@ class SendInviteSerializer(serializers.Serializer):
                     role=role,
                     status=UserStatus.INACTIVE,
                     is_active=False,
-                    invited_by=actor
+                    invited_by=assigned_broker
                 )
 
             # Revoke previous pending invitations for safety
             Invitation.objects.filter(user=user, status=InviteStatus.PENDING).update(status=InviteStatus.REVOKED)
-
             invitation = Invitation.objects.create(
                 user=user,
                 sent_by=actor

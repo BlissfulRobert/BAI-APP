@@ -16,6 +16,8 @@ urlpatterns = [
      # Your auth app (compliance accounts + invitations)
     path("api/auth/", include("authentication.urls")),
 
+    # Bookings
+    path("api/bookings/", include("bookings.urls")),
     # Your API
     path("api/users/", include("users.urls")),
     path("api/auth/accounts/", include("authentication.urls")),

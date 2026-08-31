@@ -74,6 +74,8 @@ class LoginView(DjRestAuthLoginView):
     The access token is returned only in development to simplify
     local API testing; production keeps both tokens cookie-only.
     """
+    authentication_classes = ()  # Ignores stale headers/cookies
+    permission_classes = [permissions.AllowAny]
 
     def get_response(self):
         response = super().get_response()
@@ -161,7 +163,7 @@ class SendInviteView(generics.CreateAPIView):
     POST /api/auth/invitations/send/
     """
     serializer_class = SendInviteSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsComplianceTeam]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
