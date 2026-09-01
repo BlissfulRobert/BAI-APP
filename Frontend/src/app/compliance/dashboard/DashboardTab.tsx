@@ -8,7 +8,7 @@
  * ==============================================================================
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FileSearch, CheckCircle, FileWarning, HelpCircle, ChevronLeft, ChevronRight, Bell, CalendarClock, AlertTriangle } from "lucide-react";
 import { SubmittedDocument, AuditLogEntry } from "../MockComplianceData";
 import { useCompliance } from "../ComplianceContext";
@@ -30,6 +30,9 @@ export default function DashboardTab() {
   const [endDate, setEndDate] = useState<string | null>(null); // YYYY-MM-DD
   const [isRangeActive, setIsRangeActive] = useState(false);
   const [showRangeModal, setShowRangeModal] = useState(false);
+
+  const [brokers, setBrokers] = useState<{id: string; name: string; email: string}[]>([]);
+  const [selectedBrokerId, setSelectedBrokerId] = useState<string | null>(null);
 
   // Range inputs
   const [rangeStart, setRangeStart] = useState("");
@@ -85,10 +88,37 @@ export default function DashboardTab() {
   );
 
   // Compute stats on filtered list
+
+  // Compute stats on filtered list
   const toBeReviewedCount = filteredDocs.filter(doc => doc.status === "To Be Reviewed").length;
   const additionalRequestCount = filteredDocs.filter(doc => doc.status === "Additional Request").length;
   const approvedCount = filteredDocs.filter(doc => doc.status === "Approved").length;
   const declineCount = filteredDocs.filter(doc => doc.status === "Decline").length;
+
+  // Fetch brokers from API on mount
+  useEffect(() => {
+    fetch("/api/brokers/", { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch brokers");
+        return res.json();
+      })
+      .then((data) => {
+        // Transform API response to dropdown options
+        const options = data.map((b: any) => ({
+          id: b.id || b.user_id,
+          name: b.name || b.user?.first_name + " " + (b.user?.last_name || ""),
+          email: b.email || b.user?.email,
+        }));
+        setBrokers(options);
+        // Select first broker by default if available
+        if (options.length > 0 && !selectedBrokerId) {
+          setSelectedBrokerId(options[0].id);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching brokers:", err);
+      });
+  }, []);
 
   // Filter based on selected stats card state
   const statusFilteredDocs = sortedDocs.filter(doc => {
@@ -96,7 +126,12 @@ export default function DashboardTab() {
     return doc.status === statusFilter;
   });
 
-  const recentDocs = statusFilteredDocs.slice(0, 6);
+  // Apply broker filter (if a broker is selected and docs have broker affiliation)
+  const brokerFilteredDocs = selectedBrokerId
+    ? statusFilteredDocs.filter((doc) => doc.brokerId === selectedBrokerId)
+    : statusFilteredDocs;
+
+  const recentDocs = brokerFilteredDocs.slice(0, 6);
 
   // Group filtered audit logs by date (Today 24, Yesterday 23, Day before 22)
   const groupedLogs: { [date: string]: AuditLogEntry[] } = {};
@@ -223,6 +258,26 @@ export default function DashboardTab() {
               </div>
             </div>
 
+          </div>
+
+          {/* Broker Filter */}
+          <div className="bg-white border border-slate-200/80 rounded-md p-4 mb-4">
+            <h3 className="font-extrabold text-slate-800 text-sm mb-2">Broker</h3>
+            <select
+              value={selectedBrokerId ? brokers.find(b => b.id === selectedBrokerId)?.name || "" : ""}
+              onChange={(e) => {
+                const brokerOption = brokers.find(b => b.id === e.target.value);
+                setSelectedBrokerId(brokerOption ? brokerOption.id : null);
+              }}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#1429A9]/30 text-xs font-semibold text-slate-700"
+            >
+              <option value="">All Brokers</option>
+              {brokers.map((broker) => (
+                <option key={broker.id} value={broker.id}>
+                  {broker.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* SECTION 2: SUBMITTED DOCUMENTS (TABLE SHARP EDGES override) */}

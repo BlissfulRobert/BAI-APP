@@ -15,6 +15,7 @@ export interface SubmittedDocument {
   status: "To Be Reviewed" | "Additional Request" | "Approved" | "Decline";
   fileSize?: string;
   fileType?: string;
+  brokerId?: string;
 }
 
 export interface AuditLogEntry {

@@ -93,9 +93,13 @@ export default function ApplicationsTab({
   useEffect(() => {
     async function fetchBrokers() {
       try {
-        let res = await fetch("http://localhost:8000/api/brokers/");
+        let res = await fetch("http://localhost:8000/api/brokers/", {
+          credentials: "include",
+        });
         if (!res.ok) {
-          res = await fetch("http://localhost:8000/api/bookings/brokers/");
+          res = await fetch("http://localhost:8000/api/bookings/brokers/", {
+            credentials: "include",
+          });
         }
         if (res.ok) {
           const data = await res.json();
