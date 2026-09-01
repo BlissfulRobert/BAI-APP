@@ -14,27 +14,28 @@
 # -----------------------------------------------------------------------
  # apps/bookings/views.py
 
-from datetime import datetime
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.conf import settings
 from django.utils import timezone
 
 from users.choices import UserRole
 from users.models import BrokerProfile
-from bookings.models import Booking
+from bookings.models import Booking, AvailableSlot
 from bookings.choices import BookingStatus
 from bookings.serializers import (
     ClientBookingCreateSerializer,
     BookingDetailSerializer,
     BookingStatusUpdateSerializer,
-    BrokerOptionSerializer
+    BrokerOptionSerializer,
+    AvailableSlotCreateSerializer,
+    AvailableSlotSerializer,
+    AvailableSlotClaimSerializer,
 )
 
 class AvailableSlotsView(APIView):
-    """Returns available consultation slots for the logged-in client's designated broker."""
+    """Returns the logged-in user's designated broker's published available slots for a given date."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -72,30 +73,16 @@ class AvailableSlotsView(APIView):
             designated_broker = BrokerProfile.objects.filter(user__is_active=True).first()
 
         if not designated_broker:
-            return Response({"date": date_str, "available_slots": []})
+            return Response({"date": date_str, "broker_id": None, "broker_name": None, "available_slots": []})
 
-        standard_slots = ["09:00", "10:00", "11:30", "14:00", "15:30", "16:30"]
-        available_slots = []
+        # Real published slots for the broker on the requested date.
+        slots = AvailableSlot.objects.filter(
+            broker=designated_broker,
+            slot_time__date=date_str,
+            slot_time__gt=timezone.now(),
+        )
+        available_slots = [s.slot_time.strftime("%H:%M") for s in slots]
 
-        for slot in standard_slots:
-            slot_dt_str = f"{date_str} {slot}:00"
-            try:
-                naive_dt = datetime.strptime(slot_dt_str, "%Y-%m-%d %H:%M:%S")
-                slot_dt = timezone.make_aware(naive_dt) if getattr(settings, "USE_TZ", False) else naive_dt
-            except ValueError:
-                continue
-            if slot_dt <= timezone.now():
-                continue
-
-            is_booked = Booking.objects.filter(
-                broker=designated_broker,
-                slot_time=slot_dt,
-                 status__in=[BookingStatus.SCHEDULED, BookingStatus.CONFIRMED],
-            ).exists()
-
-            if not is_booked:
-                available_slots.append(slot)
-                
         return Response({
             "date": date_str,
             "broker_id": str(designated_broker.user_id),
@@ -147,3 +134,52 @@ class BrokerListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = BrokerOptionSerializer
     queryset = BrokerProfile.objects.filter(user__is_active=True)
+
+
+class SlotListCreateView(generics.ListCreateAPIView):
+    """List an authenticated broker's published available slots, or publish a new one."""
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return AvailableSlotCreateSerializer
+        return AvailableSlotSerializer
+
+    def get_serializer_context(self):
+        return {"request": self.request}
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == UserRole.BROKER:
+            return AvailableSlot.objects.filter(broker__user=user)
+        elif user.role == UserRole.CLIENT:
+            # A client can see their designated broker's published slots.
+            broker = None
+            client_profile = user.client_profile
+            latest_app = client_profile.loan_applications.first()
+            if latest_app and latest_app.broker:
+                broker = latest_app.broker
+            elif user.invited_by and user.invited_by.role == UserRole.BROKER:
+                broker = getattr(user.invited_by, "broker_profile", None)
+            if not broker:
+                broker = BrokerProfile.objects.filter(user__is_active=True).first()
+            if not broker:
+                return AvailableSlot.objects.none()
+            return AvailableSlot.objects.filter(broker=broker)
+        elif user.role == UserRole.COMPLIANCE:
+            return AvailableSlot.objects.all()
+        return AvailableSlot.objects.none()
+
+
+class SlotDeleteView(generics.DestroyAPIView):
+    """Allow a broker to delete one of their own published available slots."""
+    permission_classes = [IsAuthenticated]
+    serializer_class = AvailableSlotSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == UserRole.BROKER:
+            return AvailableSlot.objects.filter(broker__user=user)
+        elif user.role == UserRole.COMPLIANCE:
+            return AvailableSlot.objects.all()
+        return AvailableSlot.objects.none()

@@ -111,6 +111,7 @@ export interface Booking {
   id: string;
   clientId: string;
   clientName: string;
+  brokerName?: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:MM AM/PM
   type: string;

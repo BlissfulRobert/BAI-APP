@@ -23,6 +23,7 @@ import {
   FileText,
   UserCheck,
 } from "lucide-react";
+import { authApi, getRoleRedirect } from "@/lib/api";
 
 export default function ClientLoginPage() {
   const router = useRouter();
@@ -35,15 +36,17 @@ export default function ClientLoginPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg("");
     try {
-      // Redirect directly to the client portal hub path
-      router.push("/client");
-    } catch {
-      setErrorMsg("An error occurred while attempting to log in.");
+      const data = await authApi.login(email, password);
+      const role = data.user.role;
+      document.cookie = `user-role=${role}; path=/; SameSite=Lax`;
+      router.push(getRoleRedirect(role));
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }

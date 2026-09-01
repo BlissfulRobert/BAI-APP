@@ -359,7 +359,7 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
         <div className="text-[10px] text-slate-400 font-medium text-center">
           Protected by BAI Security Systems & Encrypted Access.
         </div>
-      </div>
+        </div>
     </div>
   );
 }
