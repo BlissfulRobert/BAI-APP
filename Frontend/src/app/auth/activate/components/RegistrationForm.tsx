@@ -2,47 +2,117 @@
  * ==============================================================================
  * COMPONENT: RegistrationForm.tsx
  * Path: src/app/auth/activate/components/RegistrationForm.tsx
- * Description: The invite-only client registration form. Users enter ID credentials
- *              which are submitted for compliance audit/verification.
+ * Description: The invite-only client/broker registration form.
  * ==============================================================================
  */
 
-import React, { useState } from "react";
-import { Lock, FileText, ChevronDown, Check, ShieldAlert } from "lucide-react";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Lock, ShieldAlert, Award } from "lucide-react";
 
 interface RegistrationFormProps {
   token: string;
-  onSuccess: (clientName: string, idType: string, idNumber: string) => void;
+  onSuccess: (clientName: string, roleOrId: string) => void;
+}
+
+interface TokenValidation {
+  valid: boolean;
+  role: "client" | "broker";
+  email: string;
+  error?: string;
 }
 
 export default function RegistrationForm({ token, onSuccess }: RegistrationFormProps) {
   // ------------------------------------------------------------------------------
   // FORM FIELDS STATE
   // ------------------------------------------------------------------------------
-  const [role, setRole] = useState<"Client" | "Broker">("Client");
-  const [fullName, setFullName] = useState(""); // Asked to link it cleanly to a client
-  const [idType, setIdType] = useState("Driver License");
-  const [idNumber, setIdNumber] = useState("");
+  const [role, setRole] = useState<"client" | "broker">("client");
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [licenseNo, setLicenseNo] = useState(""); // broker only
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [tokenError, setTokenError] = useState("");
+  const [isValidating, setIsValidating] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [brokers, setBrokers] = useState<{ id: string; first_name: string; last_name: string; email: string }[]>([]);
+  const [selectedBrokerId, setSelectedBrokerId] = useState("");
+
+  // 1. Validate invitation token on mount
+  useEffect(() => {
+    async function validateToken() {
+      try {
+        const res = await fetch(
+          `http://localhost:8000/api/auth/invitations/validate/?token=${encodeURIComponent(token)}`
+        );
+        if (res.ok) {
+          const data: TokenValidation = await res.json();
+          if (data.valid) {
+            setRole(data.role || "client");
+            setEmail(data.email || "");
+          } else {
+            setTokenError(data.error || "This invitation link is invalid or has expired.");
+          }
+        } else {
+          // Fallback for standalone frontend mode
+          setRole("client");
+          setEmail("invited.user@example.com");
+        }
+      } catch {
+        // Fallback for standalone frontend mode without backend
+        setRole("client");
+        setEmail("invited.user@example.com");
+      } finally {
+        setIsValidating(false);
+      }
+    }
+
+    validateToken();
+  }, [token]);
+
+  // Fetch available brokers for client assignment
+  useEffect(() => {
+    if (role === "client") {
+      async function fetchBrokers() {
+        try {
+          const res = await fetch("http://localhost:8000/api/users/brokers/");
+          if (res.ok) {
+            const data = await res.json();
+            setBrokers(data);
+            if (data.length > 0) {
+              setSelectedBrokerId(data[0].id);
+            }
+          }
+        } catch {
+          // Ignore if backend is unavailable
+        }
+      }
+      fetchBrokers();
+    }
+  }, [role]);
 
   // ------------------------------------------------------------------------------
-  // SUBMISSION HANDLER (Submits to /auth/activate?token={} simulated backend)
+  // SUBMISSION HANDLER
   // ------------------------------------------------------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
-    // Form Validations
-    if (!fullName.trim() || !password.trim() || !confirmPassword.trim()) {
-      setErrorMsg("All basic registration fields are required.");
+    if (!firstName.trim() || !lastName.trim()) {
+      setErrorMsg("First name and last name are required.");
       return;
     }
 
-    if (role === "Broker" && !idNumber.trim()) {
-      setErrorMsg("Identity verification details are required for Broker registration.");
+    if (role === "broker" && !licenseNo.trim()) {
+      setErrorMsg("Broker License Number is required.");
+      return;
+    }
+
+    if (!password.trim() || !confirmPassword.trim()) {
+      setErrorMsg("Password fields are required.");
       return;
     }
 
@@ -59,66 +129,113 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
     setIsSubmitting(true);
 
     try {
-      // Simulate backend endpoint: /auth/activate?token={token}
-      const response = await fetch(`/auth/activate?token=${encodeURIComponent(token)}`, {
+      const payload: Record<string, string> = {
+        token,
+        first_name: firstName,
+        last_name: lastName,
+        password,
+        password_confirm: confirmPassword,
+      };
+
+      if (role === "broker") {
+        payload.license_no = licenseNo;
+      } else if (role === "client" && selectedBrokerId) {
+        payload.broker_id = selectedBrokerId;
+      }
+
+      const res = await fetch("http://localhost:8000/api/auth/invitations/accept/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, role, idType: role === "Broker" ? idType : "N/A", idNumber: role === "Broker" ? idNumber : "N/A", password })
-      }).catch(() => {
-        // Since there is no actual live backend node.js listener, this catch is expected.
-        // We bypass it for demonstration / client simulation.
-        return { ok: true };
-      });
+        body: JSON.stringify(payload),
+      }).catch(() => null);
 
-      // Prepare simulated SubmittedDocument for Compliance review if Broker, or custom review
-      const newRegistrationReview = {
+      if (res && !res.ok) {
+        const data = await res.json();
+        const backendError =
+          data.license_no?.[0] ||
+          data.token?.[0] ||
+          data.password?.[0] ||
+          data.first_name?.[0] ||
+          data.last_name?.[0] ||
+          data.non_field_errors?.[0] ||
+          "Registration failed. Please try again.";
+        throw new Error(backendError);
+      }
+
+      // Local storage record for demo compliance portal
+      const newReg = {
         id: `reg-${Date.now()}`,
-        clientName: fullName,
-        loanType: role === "Broker" ? "Broker Identity Audit" : "Client Registration",
-        documentName: role === "Broker" ? `${idType} (No. ${idNumber})` : "Self-Registered Client Profile",
+        clientName: `${firstName} ${lastName}`,
+        loanType: role === "broker" ? "Broker Identity Audit" : "Client Registration",
+        documentName: role === "broker" ? `License: ${licenseNo}` : "Self-Registered Client Profile",
         dateSubmitted: new Date().toISOString().split("T")[0],
         status: "To Be Reviewed",
         fileSize: "N/A",
-        fileType: "Signup Creds"
+        fileType: "Signup Creds",
       };
-
-      // Store in LocalStorage so Compliance portal loads it dynamically
       const existingStr = localStorage.getItem("new_registrations");
       const existing = existingStr ? JSON.parse(existingStr) : [];
-      localStorage.setItem("new_registrations", JSON.stringify([...existing, newRegistrationReview]));
+      localStorage.setItem("new_registrations", JSON.stringify([...existing, newReg]));
 
-      // Artificial loading feel
       setTimeout(() => {
         setIsSubmitting(false);
-        onSuccess(fullName, role === "Broker" ? idType : "N/A", role === "Broker" ? idNumber : "N/A");
-      }, 1500);
-
-    } catch (e) {
-      setErrorMsg("Simulated connection error. Please try again.");
+        onSuccess(`${firstName} ${lastName}`, role);
+      }, 1000);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Something went wrong.");
       setIsSubmitting(false);
     }
   };
 
+  if (isValidating) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-[#0024A8]/20 border-t-[#0024A8] rounded-full animate-spin" />
+          <span className="text-xs font-semibold text-slate-500">Validating invitation link...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (tokenError) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white border border-slate-200 shadow-xl rounded-[24px] p-8 max-w-md w-full space-y-4 text-center">
+          <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto" />
+          <h3 className="text-lg font-bold text-slate-900">Invalid Invitation</h3>
+          <p className="text-xs text-slate-600 font-medium">{tokenError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isBroker = role === "broker";
+
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans text-slate-800 relative">
-      
-      {/* ---------------------------------------------------------------------- */}
-      {/* MAIN CONTAINER CARD                                                   */}
-      {/* ---------------------------------------------------------------------- */}
-      <div className="bg-white border border-slate-200 shadow-xl rounded-[24px] p-8 max-w-md w-full space-y-6 relative z-10 animate-scaleIn">
-        
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans text-slate-800">
+      <div className="bg-white border border-slate-200 shadow-xl rounded-[24px] p-8 max-w-md w-full space-y-6 animate-scaleIn">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex px-3 py-1 rounded-full bg-[#071644]/5 border border-[#071644]/15 text-[#071644] text-[10px] font-extrabold uppercase tracking-wider mb-1">
-            Secure Invitation Activation
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-extrabold uppercase tracking-wider ${
+              isBroker ? "bg-sky-50 text-sky-700 border-sky-200" : "bg-blue-50 text-[#0024A8] border-blue-200"
+            }`}
+          >
+            <Award className="w-3.5 h-3.5" />
+            <span>{isBroker ? "Broker Portal" : "Client Portal"} Activation</span>
           </div>
-          <h2 className="text-2xl font-extrabold text-[#071644] tracking-tight">Create Account</h2>
-          <p className="text-xs text-slate-500 font-medium leading-relaxed">
-            Activate your dossier and register your verification credentials.
-          </p>
+
+          <h2 className="text-2xl font-extrabold text-[#0B2369] tracking-tight">Create Account</h2>
+
+          {email && (
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              Invited as <span className={`font-bold ${isBroker ? "text-sky-600" : "text-[#0024A8]"}`}>{email}</span>
+            </p>
+          )}
         </div>
 
-        {/* Error Alert Box */}
+        {/* Error Alert */}
         {errorMsg && (
           <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-rose-600">
             <ShieldAlert className="w-4 h-4 shrink-0 text-rose-500" />
@@ -126,158 +243,122 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
           </div>
         )}
 
-        {/* ---------------------------------------------------------------------- */}
-        {/* REGISTRATION FORM CONTAINER                                           */}
-        {/* ---------------------------------------------------------------------- */}
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* Role selector buttons */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-              Register As
-            </label>
-            <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setRole("Client")}
-                className={`py-2 px-3 text-xs font-bold rounded-lg transition-all ${
-                  role === "Client"
-                    ? "bg-[#071644] text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Client
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole("Broker")}
-                className={`py-2 px-3 text-xs font-bold rounded-lg transition-all ${
-                  role === "Broker"
-                    ? "bg-[#071644] text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                Broker
-              </button>
-            </div>
-          </div>
-
-          {/* 1. Full Name Field */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-              Full Name
-            </label>
-            <div className="relative">
+          {/* First Name & Last Name */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">First Name</label>
               <input
                 type="text"
-                placeholder="e.g. Emma Wilson"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#163691] focus:bg-white transition-all font-medium"
+                placeholder="Emma"
+                value={firstName}
+                required
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#0024A8] focus:bg-white transition-all font-medium"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Last Name</label>
+              <input
+                type="text"
+                placeholder="Wilson"
+                value={lastName}
+                required
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#0024A8] focus:bg-white transition-all font-medium"
               />
             </div>
           </div>
 
-          {/* 2. ID Type & ID Number grid (Only rendered if Role is Broker) */}
-          {role === "Broker" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
-              
-              {/* ID Type Select Dropdown */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                  ID Type
-                </label>
-                <div className="relative">
-                  <select
-                    value={idType}
-                    onChange={(e) => setIdType(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#163691] focus:bg-white transition-all font-medium appearance-none cursor-pointer"
-                  >
-                    <option value="Driver License">Driver License</option>
-                    <option value="Passport">Passport</option>
-                    <option value="National ID Card">National ID Card</option>
-                    <option value="Medicare Card">Medicare Card</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* ID Number input */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                  License Number
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. DL-987654"
-                  value={idNumber}
-                  onChange={(e) => setIdNumber(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#163691] focus:bg-white transition-all font-medium"
-                />
-              </div>
-
+          {/* Broker-only: License Number */}
+          {isBroker && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-sky-600 uppercase tracking-wider block">
+                Broker License Number
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. LIC-882739"
+                value={licenseNo}
+                required
+                onChange={(e) => setLicenseNo(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-sky-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-sky-500 focus:bg-white transition-all font-semibold"
+              />
             </div>
           )}
 
-          {/* 3. Password & Confirm Password grid */}
+          {/* Client-only: Broker Selection */}
+          {!isBroker && brokers.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                Assign to Broker
+              </label>
+              <select
+                value={selectedBrokerId}
+                onChange={(e) => setSelectedBrokerId(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#0024A8] focus:bg-white transition-all font-medium cursor-pointer"
+              >
+                {brokers.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.first_name} {b.last_name} ({b.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Password & Confirm Password */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
-            {/* Password */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                Password
-              </label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Password</label>
               <div className="relative">
                 <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3 pointer-events-none" />
                 <input
                   type="password"
-                  placeholder="******"
+                  placeholder="••••••"
                   value={password}
+                  required
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#163691] focus:bg-white transition-all font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#0024A8] focus:bg-white transition-all font-medium"
                 />
               </div>
             </div>
 
-            {/* Confirm Password */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                Confirm
-              </label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Confirm</label>
               <div className="relative">
                 <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3 pointer-events-none" />
                 <input
                   type="password"
-                  placeholder="******"
+                  placeholder="••••••"
                   value={confirmPassword}
+                  required
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#163691] focus:bg-white transition-all font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#0024A8] focus:bg-white transition-all font-medium"
                 />
               </div>
             </div>
-
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 px-4 bg-[#071644] hover:bg-[#163691] active:bg-[#071644] disabled:opacity-50 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all pt-2.5 cursor-pointer"
+            className="w-full py-3 bg-[#0024A8] hover:bg-[#001D85] disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md shadow-[#0024A8]/10 transition-all uppercase tracking-wider mt-2 flex items-center justify-center gap-2 cursor-pointer"
           >
             {isSubmitting ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <span>Submit Registration</span>
+              "Complete Registration"
             )}
           </button>
-
         </form>
 
-        {/* Footer Note */}
-        <p className="text-[10px] text-slate-400 text-center font-bold">
-          BAI Finance Identity Auditing & GDPR Safeguards
-        </p>
-
+        <div className="text-[10px] text-slate-400 font-medium text-center">
+          Protected by BAI Security Systems & Encrypted Access.
+        </div>
       </div>
     </div>
   );
