@@ -38,7 +38,7 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
   const [tokenError, setTokenError] = useState("");
   const [isValidating, setIsValidating] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [brokers, setBrokers] = useState<{ id: string; first_name: string; last_name: string; email: string }[]>([]);
+  const [brokers, setBrokers] = useState<{ id?: string; user_id?: string; name?: string; first_name?: string; last_name?: string; email: string }[]>([]);
   const [selectedBrokerId, setSelectedBrokerId] = useState("");
 
   // 1. Validate invitation token on mount
@@ -78,12 +78,15 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
     if (role === "client") {
       async function fetchBrokers() {
         try {
-          const res = await fetch("http://localhost:8000/api/users/brokers/");
+          let res = await fetch("http://localhost:8000/api/brokers/");
+          if (!res.ok) {
+            res = await fetch("http://localhost:8000/api/bookings/brokers/");
+          }
           if (res.ok) {
             const data = await res.json();
-            setBrokers(data);
+            setBrokers(Array.isArray(data) ? data : []);
             if (data.length > 0) {
-              setSelectedBrokerId(data[0].id);
+              setSelectedBrokerId(data[0].user_id || data[0].id || "");
             }
           }
         } catch {
@@ -300,11 +303,19 @@ export default function RegistrationForm({ token, onSuccess }: RegistrationFormP
                 onChange={(e) => setSelectedBrokerId(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#0024A8] focus:bg-white transition-all font-medium cursor-pointer"
               >
-                {brokers.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.first_name} {b.last_name} ({b.email})
-                  </option>
-                ))}
+                {brokers.map((b, idx) => {
+                  const brokerId = b.user_id || b.id;
+                  const displayName =
+                    b.name ||
+                    `${b.first_name || ""} ${b.last_name || ""}`.trim() ||
+                    b.email ||
+                    `Broker #${idx + 1}`;
+                  return (
+                    <option key={brokerId || idx} value={brokerId}>
+                      {displayName} {b.email ? `(${b.email})` : ""}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           )}

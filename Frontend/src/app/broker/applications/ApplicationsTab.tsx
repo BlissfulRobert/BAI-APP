@@ -7,7 +7,7 @@
  * ==============================================================================
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   Eye,
@@ -16,6 +16,7 @@ import {
   Filter,
   X,
   FileText,
+  UserCheck,
 } from "lucide-react";
 import { Application, Client } from "../MockData";
 import ClientApplicationDashboard from "./ClientApplicationDashboard";
@@ -82,6 +83,36 @@ export default function ApplicationsTab({
   const hoverBg = isCompliance ? "hover:bg-[#1429A9]" : "hover:bg-[#0B2369]";
 
   // ------------------------------------------------------------------------------
+  // REGISTERED BROKERS STATE (API: /api/brokers/)
+  // ------------------------------------------------------------------------------
+  const [registeredBrokers, setRegisteredBrokers] = useState<
+    Array<{ id: string; user_id?: string; name?: string; first_name?: string; last_name?: string; email?: string }>
+  >([]);
+  const [inviteBrokerId, setInviteBrokerId] = useState<string>("");
+
+  useEffect(() => {
+    async function fetchBrokers() {
+      try {
+        let res = await fetch("http://localhost:8000/api/brokers/");
+        if (!res.ok) {
+          res = await fetch("http://localhost:8000/api/bookings/brokers/");
+        }
+        if (res.ok) {
+          const data = await res.json();
+          const brokerList = Array.isArray(data) ? data : [];
+          setRegisteredBrokers(brokerList);
+          if (brokerList.length > 0 && !inviteBrokerId) {
+            setInviteBrokerId(brokerList[0].user_id || brokerList[0].id || "");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load brokers from /api/brokers/:", err);
+      }
+    }
+    fetchBrokers();
+  }, []);
+
+  // ------------------------------------------------------------------------------
   // INVITE MODAL STATE
   // ------------------------------------------------------------------------------
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -97,6 +128,8 @@ export default function ApplicationsTab({
     setInviteRole("client");
     setInviteStatus("idle");
     setInviteError("");
+    const defaultBroker = registeredBrokers[0];
+    setInviteBrokerId(defaultBroker ? (defaultBroker.user_id || defaultBroker.id || "") : "");
     setIsInviteOpen(true);
   };
 
@@ -104,8 +137,22 @@ export default function ApplicationsTab({
     e.preventDefault();
     if (!inviteEmail.trim()) return;
 
+    if (inviteRole === "client" && !inviteBrokerId) {
+      setInviteError("Please select an available broker to assign to this client.");
+      setInviteStatus("error");
+      return;
+    }
+
     setInviteStatus("loading");
     setInviteError("");
+
+    const payload: Record<string, any> = {
+      email: inviteEmail.trim(),
+      role: inviteRole,
+    };
+    if (inviteRole === "client" && inviteBrokerId) {
+      payload.broker_id = inviteBrokerId;
+    }
 
     try {
       const res = await fetch(
@@ -114,7 +161,7 @@ export default function ApplicationsTab({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+          body: JSON.stringify(payload),
         },
       );
 
@@ -138,6 +185,8 @@ export default function ApplicationsTab({
           errorMessage = data;
         } else if (data.email) {
           errorMessage = parseDRFError(data.email);
+        } else if (data.broker_id) {
+          errorMessage = parseDRFError(data.broker_id);
         } else if (data.role) {
           errorMessage = parseDRFError(data.role);
         } else if (data.non_field_errors) {
@@ -737,6 +786,50 @@ export default function ApplicationsTab({
                     }`}
                   />
                 </div>
+
+                {/* ASSIGN BROKER DROPDOWN (Fetched from /api/brokers/) */}
+                {inviteRole === "client" && (
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      ASSIGN BROKER <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        required
+                        value={inviteBrokerId}
+                        onChange={(e) => {
+                          setInviteBrokerId(e.target.value);
+                          setInviteError("");
+                        }}
+                        className={`w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-xs font-semibold text-slate-700 focus:outline-none transition-all ${
+                          !inviteBrokerId && inviteStatus === "error"
+                            ? "border-rose-300 focus:border-rose-400"
+                            : `border-slate-200 ${primaryBorder}`
+                        }`}
+                      >
+                        <option value="">Select available broker...</option>
+                        {registeredBrokers.map((b, idx) => {
+                          const brokerId = b.user_id || b.id;
+                          const displayName =
+                            b.name ||
+                            `${b.first_name || ""} ${b.last_name || ""}`.trim() ||
+                            b.email ||
+                            `Broker #${idx + 1}`;
+                          return (
+                            <option key={brokerId || idx} value={brokerId}>
+                              {displayName} {b.email ? `(${b.email})` : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                    {registeredBrokers.length === 0 && (
+                      <p className="text-[10px] text-amber-600 font-semibold mt-1">
+                        No active brokers found in database. Please invite a broker first.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Error */}
                 {inviteStatus === "error" && inviteError && (
