@@ -117,6 +117,11 @@ export default function ReviewTab({ submittedDocs, setSubmittedDocs, onLogAction
               ))
             )}
           </div>
+
+          {/* BOTTOM LEFT PAGE COUNTER */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500">
+            <span>Showing {pendingDocs.length > 0 ? 1 : 0} to {pendingDocs.length} of {pendingDocs.length} entries</span>
+          </div>
         </div>
 
         {/* Right Side: File Review workspace */}

@@ -99,32 +99,6 @@ export default function Sidebar({ activeTab, clientName }: SidebarProps) {
           );
         })}
       </nav>
-
-      {/* Profile summary & Logout at bottom */}
-      <div className="p-4 border-t border-white/10 bg-black/10 flex flex-col gap-3">
-        <div className="flex items-center gap-3 p-2 rounded-xl">
-          <div className="w-9 h-9 rounded-full bg-white text-[#0024A8] flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
-            {clientName.split(" ").map(w => w[0]).join("")}
-          </div>
-          <div className="min-w-0">
-            <span className="font-extrabold text-white text-xs truncate block">
-              {clientName}
-            </span>
-            <span className="text-[10px] text-sky-200/60 font-semibold truncate block">
-              Premium Account Holder
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-xs font-extrabold text-slate-200/80 hover:text-white hover:bg-white/10 transition-all border border-white/10 cursor-pointer"
-        >
-          <LogOut className="w-3.5 h-3.5 shrink-0 text-sky-200/50" />
-          <span>Log Out</span>
-        </button>
-      </div>
-
     </aside>
   );
 }

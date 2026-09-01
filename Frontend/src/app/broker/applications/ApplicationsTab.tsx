@@ -105,9 +105,6 @@ export default function ApplicationsTab({
           const data = await res.json();
           const brokerList = Array.isArray(data) ? data : [];
           setRegisteredBrokers(brokerList);
-          if (brokerList.length > 0 && !inviteBrokerId) {
-            setInviteBrokerId(brokerList[0].user_id || brokerList[0].id || "");
-          }
         }
       } catch (err) {
         console.error("Failed to load brokers from /api/brokers/:", err);
@@ -132,8 +129,7 @@ export default function ApplicationsTab({
     setInviteRole("client");
     setInviteStatus("idle");
     setInviteError("");
-    const defaultBroker = registeredBrokers[0];
-    setInviteBrokerId(defaultBroker ? (defaultBroker.user_id || defaultBroker.id || "") : "");
+    setInviteBrokerId("");
     setIsInviteOpen(true);
   };
 
@@ -643,6 +639,13 @@ export default function ApplicationsTab({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* BOTTOM LEFT PAGE COUNTER */}
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-500">
+            Showing {processedApps.length > 0 ? 1 : 0} to {processedApps.length} of {processedApps.length} entries
+          </span>
         </div>
       </div>
 

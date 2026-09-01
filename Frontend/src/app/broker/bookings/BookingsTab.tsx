@@ -17,11 +17,19 @@ import { parseSlotTime, toISOSlotTime } from "@/lib/api";
 export default function BookingsTab() {
   const { bookings, publishedSlots, createSlot, deleteSlot, loading, submitting } = useBroker();
 
-  // Calendar state
-  const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(7);
+  // Dynamic current date initialization
+  const today = new Date();
+  const initialYear = today.getFullYear();
+  const initialMonth = today.getMonth();
+  const initialDayStr = String(today.getDate()).padStart(2, "0");
+  const initialMonthStr = String(initialMonth + 1).padStart(2, "0");
+  const initialDateStr = `${initialYear}-${initialMonthStr}-${initialDayStr}`;
 
-  const [selectedDate, setSelectedDate] = useState("2026-08-25");
+  // Calendar state
+  const [currentYear, setCurrentYear] = useState(initialYear);
+  const [currentMonth, setCurrentMonth] = useState(initialMonth);
+
+  const [selectedDate, setSelectedDate] = useState(initialDateStr);
   const [slotTime, setSlotTime] = useState("10:00 AM");
   const [meetingType, setMeetingType] = useState("Initial Strategy Consultation");
   const [meetingPlatform, setMeetingPlatform] = useState("Google Meet");
@@ -67,7 +75,13 @@ export default function BookingsTab() {
     });
   };
 
+  // Prevent going back to past months before current month
+  const isMinMonth =
+    currentYear < initialYear ||
+    (currentYear === initialYear && currentMonth <= initialMonth);
+
   const handlePrevMonth = () => {
+    if (isMinMonth) return;
     if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1); }
     else setCurrentMonth((m) => m - 1);
   };
@@ -139,10 +153,19 @@ export default function BookingsTab() {
               {monthNames[currentMonth]} {currentYear}
             </h3>
             <div className="flex items-center gap-1.5">
-              <button onClick={handlePrevMonth} className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/50 text-slate-500">
+              <button
+                type="button"
+                onClick={handlePrevMonth}
+                disabled={isMinMonth}
+                className={`p-2 rounded-xl border transition-all ${
+                  isMinMonth
+                    ? "bg-slate-50 opacity-30 cursor-not-allowed border-slate-200 text-slate-300"
+                    : "bg-slate-50 hover:bg-slate-100 border-slate-200/50 text-slate-500 cursor-pointer"
+                }`}
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button onClick={handleNextMonth} className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/50 text-slate-500">
+              <button onClick={handleNextMonth} className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/50 text-slate-500 cursor-pointer">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>

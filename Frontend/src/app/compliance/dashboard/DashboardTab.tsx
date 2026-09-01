@@ -362,6 +362,11 @@ export default function DashboardTab() {
               </table>
             </div>
 
+            {/* BOTTOM LEFT PAGE COUNTER */}
+            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs font-bold text-slate-500">
+              <span>Showing {recentDocs.length > 0 ? 1 : 0} to {recentDocs.length} of {recentDocs.length} entries</span>
+            </div>
+
           </div>
 
         </div>

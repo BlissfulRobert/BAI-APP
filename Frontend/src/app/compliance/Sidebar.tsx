@@ -97,31 +97,6 @@ export default function Sidebar({ activeTab }: SidebarProps) {
           );
         })}
       </nav>
-
-      {/* User Info & Logout (Bottom of Sidebar) */}
-      <div className="p-4 border-t border-white/10 bg-black/10 flex flex-col gap-3">
-        <div className="flex items-center gap-3 p-2 rounded-xl">
-          <div className="w-9 h-9 rounded-full bg-white text-[#1429A9] flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
-            CM
-          </div>
-          <div className="min-w-0">
-            <span className="font-extrabold text-white text-xs truncate block">
-              Marcus Carter
-            </span>
-            <span className="text-[10px] text-slate-200/70 font-semibold truncate block">
-              Chief Compliance Auditor
-            </span>
-          </div>
-        </div>
-        
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-xs font-extrabold text-slate-100/75 hover:text-white hover:bg-white/10 transition-all border border-white/10 cursor-pointer"
-        >
-          <LogOut className="w-3.5 h-3.5 shrink-0 text-slate-100/60" />
-          <span>Log Out</span>
-        </button>
-      </div>
     </aside>
   );
 }
