@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
-
+from apps.bookings.views import BrokerListView
 from apps.health.views import HealthView
 from authentication.views import LoginView
 
@@ -20,8 +20,9 @@ urlpatterns = [
     path("api/bookings/", include("bookings.urls")),
     # Your API
     path("api/users/", include("users.urls")),
+    path("api/brokers/", BrokerListView.as_view(), name="broker-list"),
     path("api/auth/accounts/", include("authentication.urls")),
-
+    
     # Health
     path("healthz", HealthView.as_view(), name="healthz"),
 ]
