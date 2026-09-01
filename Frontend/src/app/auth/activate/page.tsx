@@ -29,9 +29,9 @@ function ActivatePageContent() {
   // ------------------------------------------------------------------------------
   // EVENT HANDLER: SUCCESSFUL SIGNUP
   // ------------------------------------------------------------------------------
-  const handleRegistrationSuccess = (name: string, idType: string, idNumber: string) => {
+  const handleRegistrationSuccess = (name: string, role: string) => {
     setRegistrantName(name);
-    setRegistrantDetails(`${idType} (No. ${idNumber})`);
+    setRegistrantDetails(`Role: ${role.toUpperCase()}`);
     setIsRegistered(true);
   };
 
