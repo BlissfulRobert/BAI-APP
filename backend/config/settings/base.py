@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "bookings",
     "communications",
     "audit",
+    "otp",
 ]
 
 REST_AUTH = {
@@ -181,6 +182,13 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
 }
+
+# Redis configuration
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+# OTP configuration
+OTP_SIZE = int(os.getenv("OTP_SIZE", 6))
+OTP_TTL = int(os.getenv("OTP_TTL", 180))  # 3 minutes
 
 
 AUTH_USER_MODEL = "users.User"
