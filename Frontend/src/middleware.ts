@@ -11,6 +11,42 @@ const ROUTE_ROLE_MAP: Record<string, string> = {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Check for JWT access token
+  const accessToken = request.cookies.get("jwt-access-token")?.value;
+
+  // ==========================================
+  // LOGIN ROUTE
+  // ==========================================
+  // If already logged in, don't allow access to /login
+  if (pathname === "/login") {
+    if (accessToken) {
+      const userRole = request.cookies.get("user-role")?.value;
+
+      if (userRole === "client") {
+        return NextResponse.redirect(new URL("/client", request.url));
+      }
+
+      if (userRole === "broker") {
+        return NextResponse.redirect(new URL("/broker", request.url));
+      }
+
+      if (userRole === "compliance") {
+        return NextResponse.redirect(new URL("/compliance", request.url));
+      }
+
+      // JWT exists but role is unknown
+      // You could either allow login or clear the token.
+      return NextResponse.next();
+    }
+
+    // Not logged in → allow login page
+    return NextResponse.next();
+  }
+
+  // ==========================================
+  // PROTECTED ROUTES
+  // ==========================================
+
   // Find the matched protected route
   const matchedRoute = Object.keys(ROUTE_ROLE_MAP).find((route) =>
     pathname.startsWith(route),
@@ -19,11 +55,8 @@ export async function middleware(request: NextRequest) {
   // Not a protected route — let it through
   if (!matchedRoute) return NextResponse.next();
 
-  // Check for JWT access token — if missing, not logged in at all
-  const accessToken = request.cookies.get("jwt-access-token")?.value;
-
+  // Check for JWT access token — if missing, not logged in
   if (!accessToken) {
-    // Not logged in → redirect to login
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -31,22 +64,26 @@ export async function middleware(request: NextRequest) {
   const userRole = request.cookies.get("user-role")?.value;
 
   if (!userRole) {
-    // Logged in but role unknown → redirect to login to re-authenticate
+    // Logged in but role unknown → redirect to login
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   const requiredRole = ROUTE_ROLE_MAP[matchedRoute];
 
+  // Wrong role → redirect to their own portal
   if (userRole !== requiredRole) {
-    // Logged in but WRONG role → redirect to their own portal
-    if (userRole === "client")
+    if (userRole === "client") {
       return NextResponse.redirect(new URL("/client", request.url));
-    if (userRole === "broker")
-      return NextResponse.redirect(new URL("/broker", request.url));
-    if (userRole === "compliance")
-      return NextResponse.redirect(new URL("/compliance", request.url));
+    }
 
-    // Unknown role → back to login
+    if (userRole === "broker") {
+      return NextResponse.redirect(new URL("/broker", request.url));
+    }
+
+    if (userRole === "compliance") {
+      return NextResponse.redirect(new URL("/compliance", request.url));
+    }
+
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -55,5 +92,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/client/:path*", "/broker/:path*", "/compliance/:path*"],
+  matcher: [
+    "/login",
+    "/client/:path*",
+    "/broker/:path*",
+    "/compliance/:path*",
+  ],
 };
