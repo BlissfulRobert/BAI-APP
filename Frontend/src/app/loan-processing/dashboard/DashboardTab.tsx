@@ -1,8 +1,8 @@
 /**
  * ==============================================================================
  * COMPONENT: DashboardTab.tsx
- * Path: src/app/compliance/dashboard/DashboardTab.tsx
- * Description: Compliance Dashboard displaying document analytics cards,
+ * Path: src/app/loan-processing/dashboard/DashboardTab.tsx
+ * Description: Loan Processing Dashboard displaying document analytics cards,
  *              recently submitted files list table, calendar range filter,
  *              and date-grouped audit logs with collapse controls.
  * ==============================================================================
@@ -10,13 +10,13 @@
 
 import React, { useState, useEffect } from "react";
 import { FileSearch, CheckCircle, FileWarning, HelpCircle, ChevronLeft, ChevronRight, Bell, CalendarClock, AlertTriangle } from "lucide-react";
-import { SubmittedDocument, AuditLogEntry } from "../MockComplianceData";
-import { useCompliance } from "../ComplianceContext";
+import { SubmittedDocument, AuditLogEntry } from "../MockLoanProcessingData";
+import { useLoanProcessing } from "../LoanProcessingContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function DashboardTab() {
-  const { submittedDocs, auditLogs } = useCompliance();
+  const { submittedDocs, auditLogs } = useLoanProcessing();
   const router = useRouter();
 
   // ------------------------------------------------------------------------------
@@ -296,7 +296,7 @@ export default function DashboardTab() {
                 </p>
               </div>
               <button 
-                onClick={() => router.push("/compliance/review")}
+                onClick={() => router.push("/loan-processing/review")}
                 className="text-[9px] font-bold text-amber-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-none border border-amber-400/30 transition-all select-none"
               >
                 Go to Review Audits

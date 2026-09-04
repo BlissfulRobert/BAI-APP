@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const ROUTE_ROLE_MAP: Record<string, string> = {
   "/client": "client",
   "/broker": "broker",
-  "/compliance": "compliance",
+  "/loan-processing": "loan_processing",
 };
 
 export async function middleware(request: NextRequest) {
@@ -30,12 +30,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/broker", request.url));
       }
 
-      if (userRole === "compliance") {
-        return NextResponse.redirect(new URL("/compliance", request.url));
+      if (userRole === "loan_processing") {
+        return NextResponse.redirect(new URL("/loan-processing", request.url));
       }
 
       // JWT exists but role is unknown
-      // You could either allow login or clear the token.
       return NextResponse.next();
     }
 
@@ -80,8 +79,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/broker", request.url));
     }
 
-    if (userRole === "compliance") {
-      return NextResponse.redirect(new URL("/compliance", request.url));
+    if (userRole === "loan_processing") {
+      return NextResponse.redirect(new URL("/loan-processing", request.url));
     }
 
     return NextResponse.redirect(new URL("/login", request.url));
@@ -96,6 +95,6 @@ export const config = {
     "/login",
     "/client/:path*",
     "/broker/:path*",
-    "/compliance/:path*",
+    "/loan-processing/:path*",
   ],
 };

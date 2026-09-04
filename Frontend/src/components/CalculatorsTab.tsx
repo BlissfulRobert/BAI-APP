@@ -13,16 +13,16 @@ import { Calculator, DollarSign, Calendar, Info } from "lucide-react";
 type CalcTab = "Repayments" | "Borrowing" | "InterestOnly";
 
 interface CalculatorsTabProps {
-  variant?: "broker" | "compliance" | "client";
+  variant?: "broker" | "loan_processing" | "client";
 }
 
 export default function CalculatorsTab({ variant }: CalculatorsTabProps = {}) {
   // Theme variants configuration
-  const isCompliance = variant === "compliance";
+  const isLoanProcessing = variant === "loan_processing";
   const isClient = variant === "client";
-  const primaryText = isClient ? "text-[#0024A8]" : isCompliance ? "text-[#1429A9]" : "text-[#0B2369]";
-  const primaryBg = isClient ? "bg-[#0024A8] hover:bg-[#001D85]" : isCompliance ? "bg-[#1429A9] hover:bg-[#10218A]" : "bg-[#0B2369] hover:bg-[#071644]";
-  const shadowBg = isClient ? "shadow-[#0024A8]/10" : isCompliance ? "shadow-[#1429A9]/10" : "shadow-[#0B2369]/10";
+  const primaryText = isClient ? "text-[#0024A8]" : isLoanProcessing ? "text-[#1429A9]" : "text-[#0B2369]";
+  const primaryBg = isClient ? "bg-[#0024A8] hover:bg-[#001D85]" : isLoanProcessing ? "bg-[#1429A9] hover:bg-[#10218A]" : "bg-[#0B2369] hover:bg-[#071644]";
+  const shadowBg = isClient ? "shadow-[#0024A8]/10" : isLoanProcessing ? "shadow-[#1429A9]/10" : "shadow-[#0B2369]/10";
 
   const [activeTab, setActiveTab] = useState<CalcTab>("Repayments");
 

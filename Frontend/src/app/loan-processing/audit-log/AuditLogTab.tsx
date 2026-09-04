@@ -1,15 +1,15 @@
 /**
  * ==============================================================================
  * COMPONENT: AuditLogTab.tsx
- * Path: src/app/compliance/components/AuditLogTab.tsx
- * Description: Audit Log tab listing security/compliance actions logged
- *              by Marcus Carter, Chief Auditor.
+ * Path: src/app/loan-processing/audit-log/AuditLogTab.tsx
+ * Description: Audit Log tab listing loan processing actions logged
+ *              by Marcus Carter, Loan Processing Officer.
  * ==============================================================================
  */
 
 import React, { useState } from "react";
 import { Search, ShieldAlert, History } from "lucide-react";
-import { AuditLogEntry } from "../MockComplianceData";
+import { AuditLogEntry } from "../MockLoanProcessingData";
 
 interface AuditLogTabProps {
   auditLogs: AuditLogEntry[];
@@ -30,7 +30,7 @@ export default function AuditLogTab({ auditLogs }: AuditLogTabProps) {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-800">Compliance Audit Trail</h2>
+          <h2 className="text-xl font-extrabold text-slate-800">Loan Processing Audit Trail</h2>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
             Immutable system logs documenting document reviews, approvals, and queries.
           </p>

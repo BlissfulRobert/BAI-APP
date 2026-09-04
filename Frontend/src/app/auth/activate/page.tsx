@@ -49,13 +49,13 @@ function ActivatePageContent() {
     );
   }
 
-  // Case B: Registration complete, waiting for Compliance auditing
+  // Case B: Registration complete, waiting for Loan Processing auditing
   if (isRegistered) {
     return (
       <StatusScreen
         type="success"
         title="Registration Submitted"
-        message={`Thank you ${registrantName}. Your credentials (${registrantDetails}) have been uploaded to our Compliance Portal for review and audit.`}
+        message={`Thank you ${registrantName}. Your credentials (${registrantDetails}) have been uploaded to our Loan Processing Portal for review and audit.`}
         token={token}
       />
     );

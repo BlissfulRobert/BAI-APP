@@ -3,6 +3,6 @@
 import React from "react";
 import DashboardTab from "./DashboardTab";
 
-export default function ComplianceDashboardPage() {
+export default function LoanProcessingDashboardPage() {
   return <DashboardTab />;
 }

@@ -1,8 +1,8 @@
 /**
  * ==============================================================================
  * COMPONENT: Sidebar.tsx
- * Path: src/app/compliance/Sidebar.tsx
- * Description: Sidebar component styled indicating the dedicated Compliance Portal zone.
+ * Path: src/app/loan-processing/Sidebar.tsx
+ * Description: Sidebar component styled indicating the dedicated Loan Processing Portal zone.
  *              Uses Next.js Links.
  * ==============================================================================
  */
@@ -13,20 +13,20 @@ import React from "react";
 import Link from "next/link";
 import { LayoutDashboard, CheckSquare, ClipboardList, ShieldAlert, Percent, Bell, LogOut } from "lucide-react";
 
-export type ComplianceTabType = "Dashboard" | "Review" | "Application" | "AuditLog" | "Calculator" | "Notifications";
+export type LoanProcessingTabType = "Dashboard" | "Review" | "Application" | "AuditLog" | "Calculator" | "Notifications";
 
 interface SidebarProps {
-  activeTab: ComplianceTabType;
+  activeTab: LoanProcessingTabType;
 }
 
 export default function Sidebar({ activeTab }: SidebarProps) {
-  // Menu items for Compliance portal
+  // Menu items for Loan Processing portal
   const menuItems = [
-    { id: "Dashboard" as ComplianceTabType, label: "Dashboard", icon: LayoutDashboard, href: "/compliance/dashboard" },
-    { id: "Review" as ComplianceTabType, label: "Review Tab", icon: CheckSquare, href: "/compliance/review" },
-    { id: "Application" as ComplianceTabType, label: "Application", icon: ClipboardList, href: "/compliance/application" },
-    { id: "AuditLog" as ComplianceTabType, label: "Audit Log", icon: ShieldAlert, href: "/compliance/audit-log" },
-    { id: "Calculator" as ComplianceTabType, label: "Calculator", icon: Percent, href: "/compliance/calculator" },
+    { id: "Dashboard" as LoanProcessingTabType, label: "Dashboard", icon: LayoutDashboard, href: "/loan-processing/dashboard" },
+    { id: "Review" as LoanProcessingTabType, label: "Review Tab", icon: CheckSquare, href: "/loan-processing/review" },
+    { id: "Application" as LoanProcessingTabType, label: "Application", icon: ClipboardList, href: "/loan-processing/application" },
+    { id: "AuditLog" as LoanProcessingTabType, label: "Audit Log", icon: ShieldAlert, href: "/loan-processing/audit-log" },
+    { id: "Calculator" as LoanProcessingTabType, label: "Calculator", icon: Percent, href: "/loan-processing/calculator" },
   ];
 
   const handleLogout = async () => {
@@ -61,7 +61,7 @@ export default function Sidebar({ activeTab }: SidebarProps) {
             BAI FINANCE
           </span>
           <span className="text-[10px] text-slate-100/70 font-bold uppercase tracking-wider block">
-            Compliance Portal
+            Loan Processing Portal
           </span>
         </div>
       </div>

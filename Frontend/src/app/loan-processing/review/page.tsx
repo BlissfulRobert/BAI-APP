@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { useCompliance } from "../ComplianceContext";
+import { useLoanProcessing } from "../LoanProcessingContext";
 import ReviewTab from "./ReviewTab";
 
-export default function ComplianceReviewPage() {
-  const { submittedDocs, setSubmittedDocs, handleLogAction } = useCompliance();
+export default function LoanProcessingReviewPage() {
+  const { submittedDocs, setSubmittedDocs, handleLogAction } = useLoanProcessing();
 
   return (
     <ReviewTab

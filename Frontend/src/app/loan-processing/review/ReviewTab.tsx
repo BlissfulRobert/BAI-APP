@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * COMPONENT: ReviewTab.tsx
- * Path: src/app/compliance/components/ReviewTab.tsx
+ * Path: src/app/loan-processing/review/ReviewTab.tsx
  * Description: Interactive Document Review screen with auditor triggers
  *              (Approve, Request Info, Decline) linking to the Audit Logs.
  * ==============================================================================
@@ -9,7 +9,7 @@
 
 import React, { useState } from "react";
 import { CheckSquare, Check, HelpCircle, XCircle, Info, FileText } from "lucide-react";
-import { SubmittedDocument } from "../MockComplianceData";
+import { SubmittedDocument } from "../MockLoanProcessingData";
 
 interface ReviewTabProps {
   submittedDocs: SubmittedDocument[];

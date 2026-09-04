@@ -6,7 +6,7 @@ import {
   initialAuditLogs, 
   SubmittedDocument, 
   AuditLogEntry 
-} from "./MockComplianceData";
+} from "./MockLoanProcessingData";
 
 import { 
   initialClients, 
@@ -15,7 +15,7 @@ import {
   Application 
 } from "../broker/MockData";
 
-interface ComplianceContextType {
+interface LoanProcessingContextType {
   submittedDocs: SubmittedDocument[];
   setSubmittedDocs: React.Dispatch<React.SetStateAction<SubmittedDocument[]>>;
   auditLogs: AuditLogEntry[];
@@ -29,9 +29,9 @@ interface ComplianceContextType {
   handleLogAction: (actionText: string) => void;
 }
 
-const ComplianceContext = createContext<ComplianceContextType | undefined>(undefined);
+const LoanProcessingContext = createContext<LoanProcessingContextType | undefined>(undefined);
 
-export function ComplianceProvider({ children }: { children: React.ReactNode }) {
+export function LoanProcessingProvider({ children }: { children: React.ReactNode }) {
   const [submittedDocs, setSubmittedDocs] = useState<SubmittedDocument[]>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("new_registrations");
@@ -78,7 +78,7 @@ export function ComplianceProvider({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <ComplianceContext.Provider value={{
+    <LoanProcessingContext.Provider value={{
       submittedDocs,
       setSubmittedDocs,
       auditLogs,
@@ -92,14 +92,14 @@ export function ComplianceProvider({ children }: { children: React.ReactNode }) 
       handleLogAction
     }}>
       {children}
-    </ComplianceContext.Provider>
+    </LoanProcessingContext.Provider>
   );
 }
 
-export function useCompliance() {
-  const context = useContext(ComplianceContext);
+export function useLoanProcessing() {
+  const context = useContext(LoanProcessingContext);
   if (!context) {
-    throw new Error("useCompliance must be used within a ComplianceProvider");
+    throw new Error("useLoanProcessing must be used within a LoanProcessingProvider");
   }
   return context;
 }

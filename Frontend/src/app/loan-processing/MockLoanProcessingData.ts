@@ -1,8 +1,8 @@
 /**
  * ==============================================================================
- * FILE: MockComplianceData.ts
- * Path: src/app/compliance/components/MockComplianceData.ts
- * Description: Mock Data & Type Definitions for the Compliance Portal.
+ * FILE: MockLoanProcessingData.ts
+ * Path: src/app/loan-processing/MockLoanProcessingData.ts
+ * Description: Mock Data & Type Definitions for the Loan Processing Portal.
  * ==============================================================================
  */
 

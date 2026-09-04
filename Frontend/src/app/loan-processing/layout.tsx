@@ -2,22 +2,22 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "./Sidebar";
-import { ComplianceProvider } from "./ComplianceContext";
+import { LoanProcessingProvider } from "./LoanProcessingContext";
 import { usePathname } from "next/navigation";
 import { Bell, LogOut } from "lucide-react";
 import Link from "next/link";
 
 const getActiveTab = (pathname: string) => {
-  if (pathname.includes("/compliance/dashboard")) return "Dashboard";
-  if (pathname.includes("/compliance/review")) return "Review";
-  if (pathname.includes("/compliance/application")) return "Application";
-  if (pathname.includes("/compliance/audit-log")) return "AuditLog";
-  if (pathname.includes("/compliance/calculator")) return "Calculator";
-  if (pathname.includes("/compliance/notifications")) return "Notifications";
+  if (pathname.includes("/loan-processing/dashboard")) return "Dashboard";
+  if (pathname.includes("/loan-processing/review")) return "Review";
+  if (pathname.includes("/loan-processing/application")) return "Application";
+  if (pathname.includes("/loan-processing/audit-log")) return "AuditLog";
+  if (pathname.includes("/loan-processing/calculator")) return "Calculator";
+  if (pathname.includes("/loan-processing/notifications")) return "Notifications";
   return "Dashboard";
 };
 
-export default function ComplianceLayout({ children }: { children: React.ReactNode }) {
+export default function LoanProcessingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const activeTab = getActiveTab(pathname);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -62,8 +62,8 @@ export default function ComplianceLayout({ children }: { children: React.ReactNo
   };
 
   return (
-    <ComplianceProvider>
-      <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 selection:bg-[#1429A9] selection:text-white antialiased compliance-portal-wrap">
+    <LoanProcessingProvider>
+      <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 selection:bg-[#1429A9] selection:text-white antialiased loan-processing-portal-wrap">
         
         {/* Sidebar Navigation */}
         <Sidebar activeTab={activeTab} />
@@ -75,7 +75,7 @@ export default function ComplianceLayout({ children }: { children: React.ReactNo
           <header className="h-16 bg-white border-b border-slate-200/80 px-8 flex items-center justify-between shrink-0 select-none">
             <div>
               <h1 className="text-sm font-extrabold text-slate-800 tracking-tight">
-                Compliance Overview — {getHeaderTitle()}
+                Loan Processing Overview — {getHeaderTitle()}
               </h1>
             </div>
 
@@ -83,7 +83,7 @@ export default function ComplianceLayout({ children }: { children: React.ReactNo
               
               {/* Notifications Shortcut Link */}
               <Link 
-                href="/compliance/notifications"
+                href="/loan-processing/notifications"
                 className="p-2 text-slate-500 hover:text-[#1429A9] hover:bg-slate-100/80 rounded-xl transition-all relative"
                 title="View Notifications"
               >
@@ -96,7 +96,7 @@ export default function ComplianceLayout({ children }: { children: React.ReactNo
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="p-1 hover:bg-slate-100/80 rounded-full transition-all cursor-pointer outline-hidden"
-                  title="Compliance Officer Profile"
+                  title="Loan Processing Officer Profile"
                 >
                   <div className="w-8 h-8 rounded-full bg-[#1429A9] text-white flex items-center justify-center font-bold text-xs shadow-sm">
                     MC
@@ -112,8 +112,8 @@ export default function ComplianceLayout({ children }: { children: React.ReactNo
                       </div>
                       <div className="flex flex-col text-left">
                         <span className="font-extrabold text-slate-800 text-xs leading-none">Marcus Carter</span>
-                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider mt-1">Compliance Profile</span>
-                        <span className="text-[10px] text-slate-500 font-semibold truncate mt-0.5">compliance@bai.finance</span>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider mt-1">Loan Processing Profile</span>
+                        <span className="text-[10px] text-slate-500 font-semibold truncate mt-0.5">loanprocessing@bai.finance</span>
                       </div>
                     </div>
 
@@ -141,6 +141,6 @@ export default function ComplianceLayout({ children }: { children: React.ReactNo
 
         </div>
       </div>
-    </ComplianceProvider>
+    </LoanProcessingProvider>
   );
 }

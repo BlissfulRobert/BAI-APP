@@ -18,17 +18,17 @@ export interface NotificationItem {
 
 interface NotificationsTabProps {
   notifications: NotificationItem[];
-  variant?: "client" | "broker" | "compliance";
+  variant?: "client" | "broker" | "loan_processing";
 }
 
 export default function NotificationsTab({ notifications, variant = "broker" }: NotificationsTabProps) {
   const isClient = variant === "client";
-  const isCompliance = variant === "compliance";
+  const isLoanProcessing = variant === "loan_processing";
   
-  const primaryText = isClient ? "text-[#0024A8]" : isCompliance ? "text-[#1429A9]" : "text-[#0B2369]";
-  const primaryBg = isClient ? "bg-[#0024A8]/10" : isCompliance ? "bg-[#1429A9]/10" : "bg-[#0B2369]/10";
-  const accentText = isClient ? "text-[#0024A8]" : isCompliance ? "text-[#1429A9]" : "text-[#0B2369]";
-  const dotColor = isClient ? "bg-[#0024A8]" : isCompliance ? "bg-[#1429A9]" : "bg-[#0B2369]";
+  const primaryText = isClient ? "text-[#0024A8]" : isLoanProcessing ? "text-[#1429A9]" : "text-[#0B2369]";
+  const primaryBg = isClient ? "bg-[#0024A8]/10" : isLoanProcessing ? "bg-[#1429A9]/10" : "bg-[#0B2369]/10";
+  const accentText = isClient ? "text-[#0024A8]" : isLoanProcessing ? "text-[#1429A9]" : "text-[#0B2369]";
+  const dotColor = isClient ? "bg-[#0024A8]" : isLoanProcessing ? "bg-[#1429A9]" : "bg-[#0B2369]";
 
   const getIcon = (type: string) => {
     const t = type.toLowerCase();

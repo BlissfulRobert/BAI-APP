@@ -8,7 +8,7 @@ class UserRole(models.TextChoices):
 
     CLIENT = "client", "Client"
     BROKER = "broker", "Broker"
-    COMPLIANCE = "compliance", "Compliance"
+    LOAN_PROCESSING = "loan_processing", "Loan Processing"
 
 
 class UserStatus(models.TextChoices):

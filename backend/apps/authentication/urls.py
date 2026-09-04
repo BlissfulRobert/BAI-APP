@@ -11,13 +11,13 @@
 # -----------------------------------------------------------------------
 
 from django.urls import path
-from authentication.views import ComplianceAccountCreateView, SendInviteView ,InvitationValidateView, InvitationAcceptView, InvitationResendView, InvitationRevokeView
+from authentication.views import LoanProcessingAccountCreateView, SendInviteView ,InvitationValidateView, InvitationAcceptView, InvitationResendView, InvitationRevokeView
 
 urlpatterns = [
     path(
-        "compliance/",
-        ComplianceAccountCreateView.as_view(),
-        name="auth-account-compliance-create",
+        "loan-processing/",
+        LoanProcessingAccountCreateView.as_view(),
+        name="auth-account-loan-processing-create",
     ),
 
     # Send Invite (Compliance-only)

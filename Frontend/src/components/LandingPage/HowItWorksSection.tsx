@@ -43,7 +43,7 @@ export default function HowItWorksSection() {
       icon: Mail,
       title: "You get a secure invite",
       description:
-        "Our Compliance Team verifies your details and emails you an invite to track your application.",
+        "Our Loan Processing Team verifies your details and emails you an invite to track your application.",
     },
   ];
 
@@ -71,7 +71,7 @@ export default function HowItWorksSection() {
 
           {/* Sub-headline */}
           <p className="text-slate-200 text-base sm:text-lg max-w-2xl mx-auto font-normal leading-relaxed">
-            There is no public sign-up. Your account is created by our Compliance Team and you are invited by email.
+            There is no public sign-up. Your account is created by our Loan Processing Team and you are invited by email.
           </p>
         </div>
 

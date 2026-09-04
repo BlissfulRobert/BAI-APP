@@ -13,7 +13,7 @@ import React from "react";
 import Link from "next/link";
 import { User, Landmark, History, MessageSquare, Percent, Calendar, Bell, LogOut } from "lucide-react";
 
-export type ClientTabType = "Profile" | "LoanStatus" | "TransactionHistory" | "Communication" | "Bookings" | "Calculator" | "Notifications";
+export type ClientTabType = "Profile" | "LoanStatus" | "PaymentHistory" | "Communication" | "Bookings" | "Calculator" | "Notifications";
 
 interface SidebarProps {
   activeTab: ClientTabType;
@@ -25,7 +25,7 @@ export default function Sidebar({ activeTab, clientName }: SidebarProps) {
   const menuItems = [
     { id: "Profile" as ClientTabType, label: "Profile", icon: User, href: "/client/profile" },
     { id: "LoanStatus" as ClientTabType, label: "Loan Status", icon: Landmark, href: "/client/loan-status" },
-    { id: "TransactionHistory" as ClientTabType, label: "Transaction History", icon: History, href: "/client/transaction-history" },
+    { id: "PaymentHistory" as ClientTabType, label: "Payment History", icon: History, href: "/client/payment-history" },
     { id: "Communication" as ClientTabType, label: "Communication", icon: MessageSquare, href: "/client/communication" },
     { id: "Bookings" as ClientTabType, label: "Bookings", icon: Calendar, href: "/client/bookings" },
     { id: "Calculator" as ClientTabType, label: "Calculator", icon: Percent, href: "/client/calculator" },
