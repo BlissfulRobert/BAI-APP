@@ -129,6 +129,23 @@ export const slotsApi = {
     request<void>(`/api/bookings/slots/${id}/`, { method: "DELETE" }),
 };
 
+export interface AIChatResponse {
+  answer: string;
+  sources: string[];
+}
+
+export const aiApi = {
+  chat: (question: string, domainFilter?: string, topK?: number) =>
+    request<AIChatResponse>("/api/ai/chat/", {
+      method: "POST",
+      json: {
+        question,
+        domain_filter: domainFilter,
+        top_k: topK,
+      },
+    }),
+};
+
 export function parseSlotTime(slotTime: string): { date: string; time: string } {
   const [date, timePart] = slotTime.split("T");
   if (!timePart) return { date, time: slotTime };

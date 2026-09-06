@@ -44,7 +44,7 @@ SECRET_KEY = env("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list(
     "ALLOWED_HOSTS",
-    default=["localhost", "127.0.0.1"],
+    default=["localhost", "127.0.0.1", "testserver"],
 )
 
 CORS_ALLOWED_ORIGINS = env.list(
@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "communications",
     "audit",
     "otp",
+    "ai_assistant",
 ]
 
 REST_AUTH = {

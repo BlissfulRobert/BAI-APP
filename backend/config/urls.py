@@ -26,6 +26,9 @@ urlpatterns = [
     # Add OTP Urls
     path("api/otp/", include("otp.urls")),
     
+    # AI Assistant (RAG)
+    path("api/ai/", include("ai_assistant.urls")),
+
     # Health
     path("healthz", HealthView.as_view(), name="healthz"),
 ]
