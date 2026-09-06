@@ -26,7 +26,7 @@ interface ApplicationsTabProps {
   applications: Application[];
   setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
   onSendEmail: () => void;
-  variant?: "broker" | "compliance";
+  variant?: "broker" | "loan_processing";
   setClients?: React.Dispatch<React.SetStateAction<Client[]>>;
 }
 
@@ -70,17 +70,17 @@ export default function ApplicationsTab({
   // ------------------------------------------------------------------------------
   // THEME VARIANTS
   // ------------------------------------------------------------------------------
-  const isCompliance = variant === "compliance";
-  const primaryBg = isCompliance
+  const isLoanProcessing = variant === "loan_processing";
+  const primaryBg = isLoanProcessing
     ? "bg-[#1429A9] hover:bg-[#10218A]"
     : "bg-[#0B2369] hover:bg-[#071644]";
-  const primaryText = isCompliance ? "text-[#1429A9]" : "text-[#0B2369]";
-  const primaryBorder = isCompliance
+  const primaryText = isLoanProcessing ? "text-[#1429A9]" : "text-[#0B2369]";
+  const primaryBorder = isLoanProcessing
     ? "focus:border-[#1429A9]/30"
     : "focus:border-[#0B2369]/30";
-  const barBg = isCompliance ? "bg-[#1429A9]" : "bg-[#0B2369]";
-  const shadowBg = isCompliance ? "shadow-[#1429A9]/10" : "shadow-[#0B2369]/10";
-  const hoverBg = isCompliance ? "hover:bg-[#1429A9]" : "hover:bg-[#0B2369]";
+  const barBg = isLoanProcessing ? "bg-[#1429A9]" : "bg-[#0B2369]";
+  const shadowBg = isLoanProcessing ? "shadow-[#1429A9]/10" : "shadow-[#0B2369]/10";
+  const hoverBg = isLoanProcessing ? "hover:bg-[#1429A9]" : "hover:bg-[#0B2369]";
 
   // ------------------------------------------------------------------------------
   // REGISTERED BROKERS STATE (API: /api/brokers/)
@@ -105,9 +105,6 @@ export default function ApplicationsTab({
           const data = await res.json();
           const brokerList = Array.isArray(data) ? data : [];
           setRegisteredBrokers(brokerList);
-          if (brokerList.length > 0 && !inviteBrokerId) {
-            setInviteBrokerId(brokerList[0].user_id || brokerList[0].id || "");
-          }
         }
       } catch (err) {
         console.error("Failed to load brokers from /api/brokers/:", err);
@@ -132,8 +129,7 @@ export default function ApplicationsTab({
     setInviteRole("client");
     setInviteStatus("idle");
     setInviteError("");
-    const defaultBroker = registeredBrokers[0];
-    setInviteBrokerId(defaultBroker ? (defaultBroker.user_id || defaultBroker.id || "") : "");
+    setInviteBrokerId("");
     setIsInviteOpen(true);
   };
 
@@ -355,13 +351,13 @@ export default function ApplicationsTab({
         </div>
 
         <div className="flex items-center gap-3 self-start sm:self-auto">
-          {/* Invite button — visible for both compliance and broker */}
+          {/* Invite button — visible for both loan processing and broker */}
           <button
             onClick={openInviteModal}
             className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white transition-all ${primaryBg} shadow-md ${shadowBg}`}
           >
             <Mail className="w-4 h-4" />
-            <span>{isCompliance ? "Send Invitation" : "Invite Client"}</span>
+            <span>{isLoanProcessing ? "Send Invitation" : "Invite Client"}</span>
           </button>
 
           <button
@@ -481,6 +477,7 @@ export default function ApplicationsTab({
                     <td
                       className="py-4 px-6 relative"
                       onClick={(e) => {
+                        if (isLoanProcessing) return;
                         e.stopPropagation();
                         setActiveProgressEditId(
                           activeProgressEditId === app.id ? null : app.id,
@@ -489,7 +486,9 @@ export default function ApplicationsTab({
                         setActiveStatusEditId(null);
                       }}
                     >
-                      <div className="space-y-1 cursor-pointer hover:ring-2 hover:ring-slate-200 p-1 rounded-lg transition-all">
+                      <div className={`space-y-1 p-1 rounded-lg transition-all ${
+                        !isLoanProcessing ? "cursor-pointer hover:ring-2 hover:ring-slate-200" : ""
+                      }`}>
                         <div className="w-28 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
                           <div
                             className={`h-full rounded-full ${barBg}`}
@@ -501,7 +500,7 @@ export default function ApplicationsTab({
                         </span>
                       </div>
 
-                      {activeProgressEditId === app.id && (
+                      {!isLoanProcessing && activeProgressEditId === app.id && (
                         <>
                           <div
                             className="fixed inset-0 z-20 cursor-default"
@@ -566,6 +565,7 @@ export default function ApplicationsTab({
                     <td
                       className="py-4 px-6 relative"
                       onClick={(e) => {
+                        if (isLoanProcessing) return;
                         e.stopPropagation();
                         setActiveStatusEditId(
                           activeStatusEditId === app.id ? null : app.id,
@@ -574,7 +574,9 @@ export default function ApplicationsTab({
                       }}
                     >
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider cursor-pointer hover:ring-2 hover:ring-slate-200 transition-all ${
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider transition-all ${
+                          !isLoanProcessing ? "cursor-pointer hover:ring-2 hover:ring-slate-200" : ""
+                        } ${
                           app.status === "Action needed"
                             ? "bg-rose-50 text-rose-600 border border-rose-200"
                             : app.status === "In review"
@@ -589,7 +591,7 @@ export default function ApplicationsTab({
                           : app.status}
                       </span>
 
-                      {activeStatusEditId === app.id && (
+                      {!isLoanProcessing && activeStatusEditId === app.id && (
                         <>
                           <div
                             className="fixed inset-0 z-20 cursor-default"
@@ -644,6 +646,13 @@ export default function ApplicationsTab({
             </tbody>
           </table>
         </div>
+
+        {/* BOTTOM LEFT PAGE COUNTER */}
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-500">
+            Showing {processedApps.length > 0 ? 1 : 0} to {processedApps.length} of {processedApps.length} entries
+          </span>
+        </div>
       </div>
 
       {/* ==================================================================== */}
@@ -665,7 +674,7 @@ export default function ApplicationsTab({
               <span
                 className={`text-[10px] font-extrabold ${primaryText} uppercase tracking-wider block`}
               >
-                {isCompliance ? "Compliance Portal" : "Broker Portal"} · Send
+                {isLoanProcessing ? "Loan Processing Portal" : "Broker Portal"} · Send
                 Invitation
               </span>
               <h3 className="text-base font-extrabold text-slate-800 mt-0.5">
@@ -728,8 +737,8 @@ export default function ApplicationsTab({
               </div>
             ) : (
               <form onSubmit={handleSendInvite} className="space-y-4">
-                {/* Role Toggle — Compliance sees both; Broker always invites clients */}
-                {isCompliance ? (
+                {/* Role Toggle — Loan Processing sees both; Broker always invites clients */}
+                {isLoanProcessing ? (
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                       Invite As
@@ -902,7 +911,7 @@ export default function ApplicationsTab({
               <span
                 className={`text-[10px] font-extrabold ${primaryText} uppercase tracking-wider block`}
               >
-                {isCompliance ? "Compliance" : "Broker"} Action Center
+                {isLoanProcessing ? "Loan Processing" : "Broker"} Action Center
               </span>
               <h3 className="text-base font-extrabold text-slate-800 mt-0.5">
                 Request Supporting Documents

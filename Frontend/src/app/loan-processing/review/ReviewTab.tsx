@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * COMPONENT: ReviewTab.tsx
- * Path: src/app/compliance/components/ReviewTab.tsx
+ * Path: src/app/loan-processing/review/ReviewTab.tsx
  * Description: Interactive Document Review screen with auditor triggers
  *              (Approve, Request Info, Decline) linking to the Audit Logs.
  * ==============================================================================
@@ -9,7 +9,7 @@
 
 import React, { useState } from "react";
 import { CheckSquare, Check, HelpCircle, XCircle, Info, FileText } from "lucide-react";
-import { SubmittedDocument } from "../MockComplianceData";
+import { SubmittedDocument } from "../MockLoanProcessingData";
 
 interface ReviewTabProps {
   submittedDocs: SubmittedDocument[];
@@ -116,6 +116,11 @@ export default function ReviewTab({ submittedDocs, setSubmittedDocs, onLogAction
                 </div>
               ))
             )}
+          </div>
+
+          {/* BOTTOM LEFT PAGE COUNTER */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500">
+            <span>Showing {pendingDocs.length > 0 ? 1 : 0} to {pendingDocs.length} of {pendingDocs.length} entries</span>
           </div>
         </div>
 

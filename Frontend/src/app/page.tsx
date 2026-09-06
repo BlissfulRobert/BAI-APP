@@ -15,6 +15,7 @@ import HowItWorksSection from "@/components/LandingPage/HowItWorksSection";
 import ClientPortalSection from "@/components/LandingPage/ClientPortalSection";
 import LoanCalculator from "@/components/LandingPage/LoanCalculator";
 import Footer from "@/components/LandingPage/Footer";
+import AIChatWidget from "@/components/LandingPage/AIChatWidget";
 
 export default function Home() {
   return (
@@ -61,6 +62,11 @@ export default function Home() {
       {/* SECTION 8: LEADING LENDERS TICKER MARQUEE BAR (BELOW FOOTER)           */}
       {/* ---------------------------------------------------------------------- */}
       <LenderTicker />
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* SECTION 9: FLOATING A.I CHAT CONVERSATION WIDGET (BOTTOM-RIGHT)       */}
+      {/* ---------------------------------------------------------------------- */}
+      <AIChatWidget />
     </div>
   );
 }

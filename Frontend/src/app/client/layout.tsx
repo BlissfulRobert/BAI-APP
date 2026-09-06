@@ -10,7 +10,7 @@ import Link from "next/link";
 const getActiveTab = (pathname: string) => {
   if (pathname.includes("/client/profile")) return "Profile";
   if (pathname.includes("/client/loan-status")) return "LoanStatus";
-  if (pathname.includes("/client/transaction-history")) return "TransactionHistory";
+  if (pathname.includes("/client/payment-history")) return "PaymentHistory";
   if (pathname.includes("/client/communication")) return "Communication";
   if (pathname.includes("/client/bookings")) return "Bookings";
   if (pathname.includes("/client/calculator")) return "Calculator";
@@ -58,7 +58,7 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
   const getHeaderTitle = () => {
     switch (activeTab) {
       case "LoanStatus": return "Loan Status";
-      case "TransactionHistory": return "Transactions Ledger";
+      case "PaymentHistory": return "Payment History";
       default: return activeTab;
     }
   };

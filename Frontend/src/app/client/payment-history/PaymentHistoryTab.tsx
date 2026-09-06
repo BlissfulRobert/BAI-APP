@@ -1,8 +1,8 @@
 /**
  * ==============================================================================
- * COMPONENT: TransactionHistoryTab.tsx
- * Path: src/app/client/components/TransactionHistoryTab.tsx
- * Description: Client Transactions log listing offset account activity ledger.
+ * COMPONENT: PaymentHistoryTab.tsx
+ * Path: src/app/client/payment-history/PaymentHistoryTab.tsx
+ * Description: Client Payment History log listing offset account activity ledger.
  * ==============================================================================
  */
 
@@ -10,11 +10,11 @@ import React, { useState } from "react";
 import { Search, DollarSign, ArrowUpRight, ArrowDownLeft, ShieldCheck } from "lucide-react";
 import { Transaction } from "../MockClientData";
 
-interface TransactionHistoryTabProps {
+interface PaymentHistoryTabProps {
   transactions: Transaction[];
 }
 
-export default function TransactionHistoryTab({ transactions }: TransactionHistoryTabProps) {
+export default function PaymentHistoryTab({ transactions }: PaymentHistoryTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter logs
@@ -33,7 +33,7 @@ export default function TransactionHistoryTab({ transactions }: TransactionHisto
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-800">Transaction History</h2>
+          <h2 className="text-xl font-extrabold text-slate-800">Payment History</h2>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
             Audit offset account ledger statement logs and payments clearings.
           </p>
@@ -54,7 +54,7 @@ export default function TransactionHistoryTab({ transactions }: TransactionHisto
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search transactions by keyword or date..."
+            placeholder="Search payment history by keyword or date..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#0024A8]/30 text-xs font-medium placeholder:text-slate-400"
@@ -79,7 +79,7 @@ export default function TransactionHistoryTab({ transactions }: TransactionHisto
               {filteredTx.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-400 font-medium">
-                    No transactions logs found.
+                    No payment history logs found.
                   </td>
                 </tr>
               ) : (

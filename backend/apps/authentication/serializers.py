@@ -18,7 +18,7 @@ from authentication.choices import InviteStatus
 
 User = get_user_model()
 
-class ComplianceAccountCreateSerializer(serializers.Serializer):
+class LoanProcessingAccountCreateSerializer(serializers.Serializer):
     username = None # disable username field
     email = serializers.EmailField()
     first_name = serializers.CharField(required=False, allow_blank=True)
@@ -33,7 +33,7 @@ class ComplianceAccountCreateSerializer(serializers.Serializer):
                     email=validated_data["email"],
                     username=validated_data["email"],
                     password=User.objects.make_random_password(),
-                    role=UserRole.COMPLIANCE,
+                    role=UserRole.LOAN_PROCESSING,
                     status=UserStatus.ACTIVE,
                     is_active=False,
                     invited_by=request.user
@@ -57,7 +57,7 @@ class ComplianceAccountCreateSerializer(serializers.Serializer):
 
 class SendInviteSerializer(serializers.Serializer):
     """
-    Serializer for Compliance/Brokers to send an invitation email
+    Serializer for Loan Processing/Brokers to send an invitation email
     to either a broker or a client.
 
     Validation rules:

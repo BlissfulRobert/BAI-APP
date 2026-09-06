@@ -60,12 +60,12 @@ export default function StatusScreen({ type, title, message, token }: StatusScre
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Proceed to Compliance button */}
+              {/* Proceed to Loan Processing button */}
               <Link
-                href="/compliance"
+                href="/loan-processing"
                 className="w-full py-3 px-4 bg-[#071644] hover:bg-[#163691] active:bg-[#071644] text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
               >
-                <span>Proceed to Compliance Portal</span>
+                <span>Proceed to Loan Processing Portal</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               

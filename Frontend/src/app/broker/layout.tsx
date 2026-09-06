@@ -61,8 +61,8 @@ export default function BrokerLayout({ children }: { children: React.ReactNode }
 
   return (
     <BrokerProvider>
-      {/* Wrapper with a smooth, moving gradient background (white to low-opacity theme blue) */}
-      <div className="min-h-screen moving-gradient-bg flex font-sans text-slate-900 selection:bg-blue-600 selection:text-white antialiased">
+      {/* Wrapper with solid #F2F2F2 background */}
+      <div className="min-h-screen bg-[#F2F2F2] flex font-sans text-slate-900 selection:bg-blue-600 selection:text-white antialiased">
         
         {/* Sidebar Navigation */}
         <Sidebar activeTab={activeTab} />
@@ -73,22 +73,11 @@ export default function BrokerLayout({ children }: { children: React.ReactNode }
           {/* Portal Top Header with Account Section & Notifications */}
           <header className="h-16 bg-white/70 backdrop-blur-md border-b border-slate-200/80 px-8 flex justify-between items-center z-30 select-none shrink-0">
             
-            {/* Left side: Dynamic Title with Dashboard Subtitle */}
+            {/* Left side: Dynamic Title */}
             <div className="flex items-center">
-              {activeTab === "Dashboard" ? (
-                <div className="flex flex-col text-left">
-                  <h1 className="font-extrabold text-slate-800 tracking-tight text-lg leading-tight">
-                    Broker Dashboard
-                  </h1>
-                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                    Real-time analytics and dossier tracking filtered by timeframe.
-                  </p>
-                </div>
-              ) : (
-                <h1 className="font-extrabold text-slate-800 tracking-tight text-lg">
-                  {activeTab}
-                </h1>
-              )}
+              <h1 className="font-extrabold text-slate-800 tracking-tight text-lg">
+                {activeTab === "Dashboard" ? "Broker Dashboard" : activeTab}
+              </h1>
             </div>
 
             {/* Right side: Tools & Profile Menu */}

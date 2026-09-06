@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @layer utilities {
@@ -26,9 +27,9 @@
   .client-portal-wrap [class*="rounded-3xl"],
   .client-portal-wrap [class*="rounded-2xl"],
   .client-portal-wrap [class*="rounded-xl"],
-  .compliance-portal-wrap [class*="rounded-3xl"],
-  .compliance-portal-wrap [class*="rounded-2xl"],
-  .compliance-portal-wrap [class*="rounded-xl"] {
+  .loan-processing-portal-wrap [class*="rounded-3xl"],
+  .loan-processing-portal-wrap [class*="rounded-2xl"],
+  .loan-processing-portal-wrap [class*="rounded-xl"] {
     border-radius: 0px !important;
   }
 

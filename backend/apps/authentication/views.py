@@ -24,8 +24,8 @@ from datetime import timedelta
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from authentication.permissions import IsComplianceTeam
-from authentication.serializers import ComplianceAccountCreateSerializer
+from authentication.permissions import IsLoanProcessingTeam
+from authentication.serializers import LoanProcessingAccountCreateSerializer
 from audit.models import AuditLog
 
 from users.models import User, ClientProfile, BrokerProfile
@@ -38,9 +38,9 @@ from authentication.serializers import SendInviteSerializer, InvitationAcceptSer
 
 User = get_user_model()
 
-class ComplianceAccountCreateView(generics.CreateAPIView):
-    serializer_class = ComplianceAccountCreateSerializer
-    permission_classes = [IsComplianceTeam]
+class LoanProcessingAccountCreateView(generics.CreateAPIView):
+    serializer_class = LoanProcessingAccountCreateSerializer
+    permission_classes = [IsLoanProcessingTeam]
 
     def perform_create(self, serializer):
         user = serializer.save(request=self.request)
@@ -48,7 +48,7 @@ class ComplianceAccountCreateView(generics.CreateAPIView):
 
         AuditLog.objects.create(
             actor=self.request.user,
-            action="COMPLIANCE_ACCOUNT_CREATED",
+            action="LOAN_PROCESSING_ACCOUNT_CREATED",
             entity_type="User",
             entity_id=user.id,
             ip_address=self.request.META.get("REMOTE_ADDR")
@@ -62,7 +62,7 @@ class ComplianceAccountCreateView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response(
-            {"message": "Compliance account created and invite sent."},
+            {"message": "Loan Processing account created and invite sent."},
             status=status.HTTP_201_CREATED,
         )
 
@@ -158,12 +158,12 @@ def send_invite_email(user, invitation, request):
 
 class SendInviteView(generics.CreateAPIView):
     """
-    Compliance-only endpoint to send an invitation email
+    Loan Processing-only endpoint to send an invitation email
     to a broker or client.
     POST /api/auth/invitations/send/
     """
     serializer_class = SendInviteSerializer
-    permission_classes = [IsComplianceTeam]
+    permission_classes = [IsLoanProcessingTeam]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

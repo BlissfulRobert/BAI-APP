@@ -15,7 +15,7 @@ import { Client } from "../MockData";
 interface ClientApplicationDashboardProps {
   client: Client;
   onBack: () => void;
-  variant?: "broker" | "compliance";
+  variant?: "broker" | "loan_processing";
   onUpdateClient?: (updatedClient: Client) => void;
 }
 
@@ -28,10 +28,10 @@ export default function ClientApplicationDashboard({ client: initialClient, onBa
   const [activeDocEditKey, setActiveDocEditKey] = React.useState<string | null>(null);
 
   // Theme variants configuration
-  const isCompliance = variant === "compliance";
-  const primaryText = isCompliance ? "text-[#1429A9]" : "text-[#0B2369]";
-  const timelineCompletedBg = isCompliance ? "bg-[#1429A9]" : "bg-[#0070c0]";
-  const hoverTextHighlight = isCompliance ? "hover:text-[#1429A9] hover:border-[#1429A9]/40" : "hover:text-[#0B2369] hover:border-[#0B2369]/40";
+  const isLoanProcessing = variant === "loan_processing";
+  const primaryText = isLoanProcessing ? "text-[#1429A9]" : "text-[#0B2369]";
+  const timelineCompletedBg = isLoanProcessing ? "bg-[#1429A9]" : "bg-[#0070c0]";
+  const hoverTextHighlight = isLoanProcessing ? "hover:text-[#1429A9] hover:border-[#1429A9]/40" : "hover:text-[#0B2369] hover:border-[#0B2369]/40";
   
   // Format currency helper
   const formatCurrency = (val: number) => {
@@ -53,7 +53,7 @@ export default function ClientApplicationDashboard({ client: initialClient, onBa
   };
 
   const handleStageClick = (stageIndex: number) => {
-    if (!isCompliance) return;
+    if (!isLoanProcessing) return;
     
     let targetProgress = 20;
     if (stageIndex === 1) targetProgress = 20;
@@ -272,13 +272,13 @@ export default function ClientApplicationDashboard({ client: initialClient, onBa
                         <td className="py-3 px-3 relative">
                           <span 
                             onClick={(e) => {
-                              if (isCompliance) {
+                              if (isLoanProcessing) {
                                 e.stopPropagation();
                                 setActiveDocEditKey(activeDocEditKey === doc.key ? null : doc.key);
                               }
                             }}
                             className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${
-                              isCompliance ? "cursor-pointer hover:ring-2 hover:ring-[#1429A9]/30" : ""
+                              isLoanProcessing ? "cursor-pointer hover:ring-2 hover:ring-[#1429A9]/30" : ""
                             } ${
                               doc.status === "Verified"
                                 ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
@@ -294,7 +294,7 @@ export default function ClientApplicationDashboard({ client: initialClient, onBa
                             {doc.status === "Not Uploaded" ? "Action Needed" : doc.status}
                           </span>
 
-                          {isCompliance && activeDocEditKey === doc.key && (
+                          {isLoanProcessing && activeDocEditKey === doc.key && (
                             <>
                               <div 
                                 className="fixed inset-0 z-20 cursor-default" 
@@ -366,7 +366,7 @@ export default function ClientApplicationDashboard({ client: initialClient, onBa
               ].map((stage) => {
                 const state = getStageState(stage.index);
                 const isCompleted = state === "completed";
-                const isClickable = isCompliance;
+                const isClickable = isLoanProcessing;
 
                 let circleContent = <span className="font-extrabold text-[10px]">{stage.index}</span>;
                 let circleClass = "bg-slate-100 border border-slate-300 text-slate-400";

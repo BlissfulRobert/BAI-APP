@@ -35,7 +35,7 @@ export interface AuthUser {
   id: string;
   email: string;
   username: string;
-  role: "client" | "broker" | "compliance";
+  role: "client" | "broker" | "loan_processing";
   status: string;
   mfa_enabled: boolean;
   is_active: boolean;
@@ -60,7 +60,7 @@ export const authApi = {
 export function getRoleRedirect(role: AuthUser["role"]): string {
   if (role === "client") return "/client";
   if (role === "broker") return "/broker";
-  return "/compliance";
+  return "/loan-processing";
 }
 
 export interface BookingApiResponse {

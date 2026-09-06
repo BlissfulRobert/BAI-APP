@@ -105,7 +105,7 @@ class BookingListCreateView(generics.ListCreateAPIView):
             return Booking.objects.filter(broker__user=user)
         elif user.role == UserRole.CLIENT:
             return Booking.objects.filter(client__user=user)
-        elif user.role == UserRole.COMPLIANCE:
+        elif user.role == UserRole.LOAN_PROCESSING:
             return Booking.objects.all()
         return Booking.objects.none()
 
@@ -125,7 +125,7 @@ class BookingDetailView(generics.RetrieveUpdateAPIView):
             return Booking.objects.filter(broker__user=user)
         elif user.role == UserRole.CLIENT:
             return Booking.objects.filter(client__user=user)
-        elif user.role == UserRole.COMPLIANCE:
+        elif user.role == UserRole.LOAN_PROCESSING:
             return Booking.objects.all()
         return Booking.objects.none()
 
@@ -166,7 +166,7 @@ class SlotListCreateView(generics.ListCreateAPIView):
             if not broker:
                 return AvailableSlot.objects.none()
             return AvailableSlot.objects.filter(broker=broker)
-        elif user.role == UserRole.COMPLIANCE:
+        elif user.role == UserRole.LOAN_PROCESSING:
             return AvailableSlot.objects.all()
         return AvailableSlot.objects.none()
 
@@ -180,6 +180,6 @@ class SlotDeleteView(generics.DestroyAPIView):
         user = self.request.user
         if user.role == UserRole.BROKER:
             return AvailableSlot.objects.filter(broker__user=user)
-        elif user.role == UserRole.COMPLIANCE:
+        elif user.role == UserRole.LOAN_PROCESSING:
             return AvailableSlot.objects.all()
         return AvailableSlot.objects.none()

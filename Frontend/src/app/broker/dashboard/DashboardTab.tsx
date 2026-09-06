@@ -10,7 +10,7 @@
  */
 
 import React, { useState } from "react";
-import { ClipboardList, Clock, AlertTriangle, CheckCircle, ArrowRight, Calendar, UserPlus, Percent, Bell, CalendarClock, ChevronDown, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ClipboardList, Clock, AlertTriangle, CheckCircle, ArrowRight, Calendar, UserPlus, Percent, Bell, CalendarClock, ChevronDown, ArrowUpRight, ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import { Client } from "../MockData";
 import ClientApplicationDashboard from "../applications/ClientApplicationDashboard";
 import { useBroker } from "../BrokerContext";
@@ -18,12 +18,12 @@ import Link from "next/link";
 
 export default function DashboardTab() {
   const { clients } = useBroker();
-  
+
   // ------------------------------------------------------------------------------
   // STATE DEFINITIONS
   // ------------------------------------------------------------------------------
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  
+
   // Clickable stat card filter state
   const [statusFilter, setStatusFilter] = useState<"All" | "Active" | "In review" | "Requested" | "Approved">("All");
 
@@ -56,7 +56,7 @@ export default function DashboardTab() {
 
   // Helper date parsing (assuming current date is 2026-08-24)
   const currentDateStr = "2026-08-24";
-  
+
   // ------------------------------------------------------------------------------
   // DYNAMIC FILTERING LOGIC
   // ------------------------------------------------------------------------------
@@ -88,7 +88,7 @@ export default function DashboardTab() {
   const filteredLogs = getFilteredLogs();
 
   // Sort filtered clients by dateStarted descending (most recent first)
-  const sortedClients = [...filteredClients].sort((a, b) => 
+  const sortedClients = [...filteredClients].sort((a, b) =>
     b.dateStarted.localeCompare(a.dateStarted)
   );
 
@@ -132,177 +132,195 @@ export default function DashboardTab() {
   });
   const sortedLogDates = Object.keys(groupedLogs).sort((a, b) => b.localeCompare(a));
 
+  // Helper for document status badge background color (45% opacity)
+  const getStatusBadgeBg = (state: string) => {
+    switch (state) {
+      case "In review":
+      case "In Review":
+        return "bg-[#FFBC1F]/45";
+      case "Approved":
+      case "Settled":
+        return "bg-[#00D12A]/45";
+      case "Declined":
+      case "Decline":
+        return "bg-[#D11F00]/45";
+      case "Requested":
+      case "Action needed":
+      default:
+        return "bg-[#2268A5]/45";
+    }
+  };
+
   if (selectedClient) {
     return (
-      <ClientApplicationDashboard 
-        client={selectedClient} 
-        onBack={() => setSelectedClient(null)} 
+      <ClientApplicationDashboard
+        client={selectedClient}
+        onBack={() => setSelectedClient(null)}
       />
     );
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      
+    <div className="space-y-8 animate-fadeIn font-['Poppins',sans-serif]">
+
       {/* Split Grid Layout (Left: Stats & Banner & Table | Right: Calendar & Audit Logs) */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch">
-        
+
         {/* LEFT COLUMN: STATISTICS, BANNER & CLIENT LIST TABLE */}
         <div className="xl:col-span-8 space-y-8">
-          
+
           {/* Active Filter Indicators */}
           {(selectedDate || (isRangeActive && startDate && endDate)) && (
-            <div className="bg-[#1429A9]/5 border border-[#1429A9]/20 p-4 flex justify-between items-center text-xs text-slate-700 font-bold select-none rounded-none">
+            <div className="bg-white border border-[#0038A8] p-4 flex justify-between items-center text-xs text-[#808080] font-bold select-none rounded-[5px]">
               <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-[#1429A9] rounded-full" />
-                <span>
-                  Filtering statistics for: <strong className="text-[#1429A9]">{selectedDate ? `Date: ${selectedDate}` : `Range: ${startDate} to ${endDate}`}</strong>
+                <span className="w-1.5 h-1.5 bg-[#0038A8] rounded-full" />
+                <span className="font-['Inter',sans-serif]">
+                  Filtering statistics for: <strong className="text-[#000000] font-['Poppins',sans-serif]">{selectedDate ? `Date: ${selectedDate}` : `Range: ${startDate} to ${endDate}`}</strong>
                 </span>
               </div>
-              <button 
+              <button
                 onClick={() => {
                   setSelectedDate(null);
                   setIsRangeActive(false);
                   setStartDate(null);
                   setEndDate(null);
                 }}
-                className="text-[#1429A9] hover:underline"
+                className="bg-gradient-to-r from-[#0038A8] to-[#002066] text-white px-3 py-1 rounded-[5px] text-xs font-bold transition-all hover:opacity-90 cursor-pointer font-['Poppins',sans-serif]"
               >
                 Clear Filter
               </button>
             </div>
           )}
 
-          {/* SECTION 1.5: TOTAL LOAN VALUE BANNER (SHARP EDGES) */}
-          <div className="bg-gradient-to-r from-[#0d1b6b] via-[#1429A9] to-[#253ee6] border border-white/10 rounded-none p-6 shadow-soft-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none animate-fadeIn">
+          {/* SECTION 1.5: TOTAL LOAN VALUE BANNER */}
+          <div className="bg-gradient-to-r from-[#0038A8] to-[#002066] border border-[#0038A8] rounded-[5px] p-6 shadow-soft-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none animate-fadeIn text-white">
             <div className="space-y-1.5">
-              <span className="text-xs font-bold text-amber-300/80 uppercase tracking-wider block">
+              <span className="text-xs font-bold text-white uppercase tracking-wider block font-['Inter',sans-serif]">
                 Total Approved Loan Value
               </span>
               <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="text-4xl font-extrabold text-amber-400 tracking-tight">
+                <span className="text-4xl font-extrabold text-white tracking-tight font-['Inter',sans-serif]">
                   A$ {totalApprovedLoanValue.toLocaleString()}
                 </span>
-                <div className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-white/10 px-2 py-0.5 rounded-lg border border-amber-400/20">
-                  <ArrowUpRight className="w-3 h-3 text-amber-400" />
+                <div className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-white/20 px-2 py-0.5 rounded-[5px] border border-white/30 font-['Poppins',sans-serif]">
+                  <ArrowUpRight className="w-3 h-3 text-white" />
                   <span>+14.8% increase</span>
                 </div>
               </div>
             </div>
             <div className="flex flex-col items-start md:items-end gap-0.5">
-              <span className="text-xs font-bold text-amber-300/80 uppercase tracking-wider">
+              <span className="text-xs font-bold text-white uppercase tracking-wider font-['Inter',sans-serif]">
                 Approved Loan Volume
               </span>
-              <span className="text-lg font-extrabold text-amber-400">
+              <span className="text-lg font-extrabold text-white font-['Inter',sans-serif]">
                 {approvedLoansCount} Approved Loans Totaled
               </span>
-              <p className="text-[10px] text-slate-300 font-medium">
+              <p className="text-[10px] text-white/80 font-medium font-['Poppins',sans-serif]">
                 Calculated dynamically based on timeframe filter
               </p>
             </div>
           </div>
 
-          {/* SECTION 2: STATS SUMMARY CARDS (SHARP EDGES, DYNAMIC CLICK STYLING) */}
+          {/* SECTION 2: STATS SUMMARY CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            
-            {/* Card 1: Active Applications - Dynamic layout & Selection theme styling */}
-            <div 
+
+            {/* Card 1: Active Applications */}
+            <div
               onClick={() => setStatusFilter(statusFilter === "Active" ? "All" : "Active")}
-              className={`relative rounded-none p-6 border shadow-soft-xl hover:shadow-md transition-all duration-300 cursor-pointer select-none ${
-                statusFilter === "Active" 
-                  ? "bg-[#1429A9] border-[#1429A9] text-white animate-scaleIn" 
-                  : "bg-transparent border-slate-200 hover:border-[#1429A9]/40 text-[#1429A9]"
-              }`}
+              className={`relative rounded-[5px] p-6 border border-[#0038A8] shadow-soft-xl hover:shadow-md transition-all duration-300 cursor-pointer select-none ${statusFilter === "Active"
+                ? "bg-[#0038A8] text-white animate-scaleIn"
+                : "bg-white text-[#000000] hover:bg-slate-50"
+                }`}
             >
-              <div className={`text-5xl font-black leading-none mb-2 ${statusFilter === "Active" ? "text-white" : "text-[#1429A9]"}`}>
-                {activeAppsCount}
+              <div className="flex justify-between items-start mb-2">
+                <div className={`text-5xl font-black leading-none font-['Inter',sans-serif] ${statusFilter === "Active" ? "text-white" : "text-[#000000]"}`}>
+                  {activeAppsCount}
+                </div>
+                <div className="w-10 h-10 bg-[#0038A8] rounded-[5px] flex items-center justify-center text-white shrink-0 shadow-xs">
+                  <ClipboardList className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <span className={`text-[10px] font-extrabold uppercase tracking-wider block ${statusFilter === "Active" ? "text-white/85" : "text-[#1429A9]/75"}`}>
+              <span className={`text-[10px] font-extrabold uppercase tracking-wider block font-['Inter',sans-serif] ${statusFilter === "Active" ? "text-white/90" : "text-[#808080]"}`}>
                 Active applications
               </span>
-              <div className={`absolute bottom-6 right-6 ${statusFilter === "Active" ? "text-white/20" : "text-[#1429A9]/20"}`}>
-                <ClipboardList className="w-10 h-10" />
-              </div>
             </div>
 
-            {/* Card 2: In Review - Dynamic layout & Selection theme styling */}
-            <div 
+            {/* Card 2: In Review */}
+            <div
               onClick={() => setStatusFilter(statusFilter === "In review" ? "All" : "In review")}
-              className={`relative rounded-none p-6 border shadow-soft-xl hover:shadow-md transition-all duration-300 cursor-pointer select-none ${
-                statusFilter === "In review" 
-                  ? "bg-[#1429A9] border-[#1429A9] text-white animate-scaleIn" 
-                  : "bg-transparent border-slate-200 hover:border-[#1429A9]/40 text-[#1429A9]"
-              }`}
+              className={`relative rounded-[5px] p-6 border border-[#0038A8] shadow-soft-xl hover:shadow-md transition-all duration-300 cursor-pointer select-none ${statusFilter === "In review"
+                ? "bg-[#0038A8] text-white animate-scaleIn"
+                : "bg-white text-[#000000] hover:bg-slate-50"
+                }`}
             >
-              <div className={`text-5xl font-black leading-none mb-2 ${statusFilter === "In review" ? "text-white" : "text-[#1429A9]"}`}>
-                {inReviewCount}
+              <div className="flex justify-between items-start mb-2">
+                <div className={`text-5xl font-black leading-none font-['Inter',sans-serif] ${statusFilter === "In review" ? "text-white" : "text-[#000000]"}`}>
+                  {inReviewCount}
+                </div>
+                <div className="w-10 h-10 bg-[#0038A8] rounded-[5px] flex items-center justify-center text-white shrink-0 shadow-xs">
+                  <Clock className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <span className={`text-[10px] font-extrabold uppercase tracking-wider block ${statusFilter === "In review" ? "text-white/85" : "text-[#1429A9]/75"}`}>
+              <span className={`text-[10px] font-extrabold uppercase tracking-wider block font-['Inter',sans-serif] ${statusFilter === "In review" ? "text-white/90" : "text-[#808080]"}`}>
                 In review
               </span>
-              <div className={`absolute bottom-6 right-6 ${statusFilter === "In review" ? "text-white/20" : "text-[#1429A9]/20"}`}>
-                <Clock className="w-10 h-10" />
-              </div>
             </div>
 
-            {/* Card 3: Action Needed - Dynamic layout & Selection theme styling */}
-            <div 
+            {/* Card 3: Action Needed */}
+            <div
               onClick={() => setStatusFilter(statusFilter === "Requested" ? "All" : "Requested")}
-              className={`relative rounded-none p-6 border shadow-soft-xl hover:shadow-md transition-all duration-300 cursor-pointer select-none ${
-                statusFilter === "Requested" 
-                  ? "bg-[#1429A9] border-[#1429A9] text-white animate-scaleIn" 
-                  : "bg-transparent border-slate-200 hover:border-[#1429A9]/40 text-[#1429A9]"
-              }`}
+              className={`relative rounded-[5px] p-6 border border-[#0038A8] shadow-soft-xl hover:shadow-md transition-all duration-300 cursor-pointer select-none ${statusFilter === "Requested"
+                ? "bg-[#0038A8] text-white animate-scaleIn"
+                : "bg-white text-[#000000] hover:bg-slate-50"
+                }`}
             >
-              <div className={`text-5xl font-black leading-none mb-2 ${statusFilter === "Requested" ? "text-white" : "text-[#1429A9]"}`}>
-                {actionNeededCount}
+              <div className="flex justify-between items-start mb-2">
+                <div className={`text-5xl font-black leading-none font-['Inter',sans-serif] ${statusFilter === "Requested" ? "text-white" : "text-[#000000]"}`}>
+                  {actionNeededCount}
+                </div>
+                <div className="w-10 h-10 bg-[#0038A8] rounded-[5px] flex items-center justify-center text-white shrink-0 shadow-xs">
+                  <AlertTriangle className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <span className={`text-[10px] font-extrabold uppercase tracking-wider block ${statusFilter === "Requested" ? "text-white/85" : "text-[#1429A9]/75"}`}>
+              <span className={`text-[10px] font-extrabold uppercase tracking-wider block font-['Inter',sans-serif] ${statusFilter === "Requested" ? "text-white/90" : "text-[#808080]"}`}>
                 Action needed
               </span>
-              <div className={`absolute bottom-6 right-6 ${statusFilter === "Requested" ? "text-white/20" : "text-[#1429A9]/20"}`}>
-                <AlertTriangle className="w-10 h-10" />
-              </div>
             </div>
 
-            {/* Card 4: Approved - Dynamic layout & Selection theme styling */}
-            <div 
+            {/* Card 4: Approved */}
+            <div
               onClick={() => setStatusFilter(statusFilter === "Approved" ? "All" : "Approved")}
-              className={`relative rounded-none p-6 border shadow-soft-xl hover:shadow-md transition-all duration-300 cursor-pointer select-none ${
-                statusFilter === "Approved" 
-                  ? "bg-[#1429A9] border-[#1429A9] text-white animate-scaleIn" 
-                  : "bg-transparent border-slate-200 hover:border-[#1429A9]/40 text-[#1429A9]"
-              }`}
+              className={`relative rounded-[5px] p-6 border border-[#0038A8] shadow-soft-xl hover:shadow-md transition-all duration-300 cursor-pointer select-none ${statusFilter === "Approved"
+                ? "bg-[#0038A8] text-white animate-scaleIn"
+                : "bg-white text-[#000000] hover:bg-slate-50"
+                }`}
             >
-              <div className={`text-5xl font-black leading-none mb-2 ${statusFilter === "Approved" ? "text-white" : "text-[#1429A9]"}`}>
-                {approvedCount}
+              <div className="flex justify-between items-start mb-2">
+                <div className={`text-5xl font-black leading-none font-['Inter',sans-serif] ${statusFilter === "Approved" ? "text-white" : "text-[#000000]"}`}>
+                  {approvedCount}
+                </div>
+                <div className="w-10 h-10 bg-[#0038A8] rounded-[5px] flex items-center justify-center text-white shrink-0 shadow-xs">
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <span className={`text-[10px] font-extrabold uppercase tracking-wider block ${statusFilter === "Approved" ? "text-white/85" : "text-[#1429A9]/75"}`}>
+              <span className={`text-[10px] font-extrabold uppercase tracking-wider block font-['Inter',sans-serif] ${statusFilter === "Approved" ? "text-white/90" : "text-[#808080]"}`}>
                 Approved
               </span>
-              <div className={`absolute bottom-6 right-6 ${statusFilter === "Approved" ? "text-white/20" : "text-[#1429A9]/20"}`}>
-                <CheckCircle className="w-10 h-10" />
-              </div>
             </div>
 
           </div>
 
           {/* SECTION 3: RECENT CLIENT SUMMARY TABLE */}
-          <div className="bg-white rounded-none border border-slate-200/80 shadow-soft-xl overflow-hidden h-[482px] flex flex-col justify-between">
-            <div className="p-5 bg-gradient-to-r from-[#0d1b6b] to-[#1429A9] border-b border-white/10 flex items-center justify-between shrink-0">
+          <div className="bg-white rounded-[5px] border border-[#0038A8] shadow-soft-xl overflow-hidden h-[482px] flex flex-col justify-between">
+            <div className="p-5 bg-white border-b border-[#0038A8]/20 flex items-center justify-between shrink-0">
               <div>
-                <h3 className="font-extrabold text-amber-400 text-sm">
-                  Recent Client Summary {statusFilter !== "All" && <span className="text-amber-300">({statusFilter})</span>}
+                <h3 className="font-extrabold text-[#000000] text-sm font-['Inter',sans-serif]">
+                  Recent Client Summary {statusFilter !== "All" && <span className="text-[#808080] font-['Poppins',sans-serif]">({statusFilter})</span>}
                 </h3>
-                <p className="text-[10px] text-slate-300 font-medium">
-                  {statusFilter !== "All" 
-                    ? `Showing clients in "${statusFilter}" state. Click card again to reset.` 
-                    : "Click on any client to view their detailed profile dashboard"}
-                </p>
               </div>
-              <Link 
+              <Link
                 href="/broker/applications"
-                className="text-[9px] font-bold text-amber-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded-none border border-amber-400/30 transition-all select-none"
+                className="text-[9px] font-bold text-white bg-gradient-to-r from-[#0038A8] to-[#002066] px-3 py-1 rounded-[5px] border border-[#0038A8] transition-all select-none hover:opacity-90 font-['Poppins',sans-serif]"
               >
                 View All
               </Link>
@@ -311,7 +329,7 @@ export default function DashboardTab() {
             <div className="overflow-x-auto flex-1">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/75 border-b border-slate-100 text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
+                  <tr className="bg-slate-50 border-b border-[#0038A8]/20 text-[10px] font-extrabold uppercase text-[#000000] tracking-wider font-['Inter',sans-serif]">
                     <th className="py-3 px-5">Client Name</th>
                     <th className="py-3 px-5">Dossier Progress</th>
                     <th className="py-3 px-5">Status</th>
@@ -320,10 +338,10 @@ export default function DashboardTab() {
                     <th className="py-3 px-5 text-right">Loan Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 text-xs">
+                <tbody className="divide-y divide-slate-100 text-xs font-['Poppins',sans-serif]">
                   {recentClients.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
+                      <td colSpan={6} className="py-12 text-center text-[#808080] font-medium font-['Poppins',sans-serif]">
                         No clients found for this timeframe filter.
                       </td>
                     </tr>
@@ -332,44 +350,37 @@ export default function DashboardTab() {
                       <tr
                         key={client.id}
                         onClick={() => setSelectedClient(client)}
-                        className={`cursor-pointer transition-colors group ${
-                          index % 2 === 0 
-                            ? "bg-white hover:bg-slate-50/80" 
-                            : "bg-slate-50/40 hover:bg-slate-100/50"
-                        }`}
+                        className={`cursor-pointer transition-colors group ${index % 2 === 0
+                          ? "bg-white hover:bg-slate-50"
+                          : "bg-slate-50/50 hover:bg-slate-100/60"
+                          }`}
                       >
-                        <td className="py-3.5 px-5 font-bold text-slate-800 group-hover:text-[#1429A9]">
+                        <td className="py-3.5 px-5 text-[#808080] font-medium">
                           {client.name}
                         </td>
                         <td className="py-3.5 px-5">
                           <div className="flex items-center gap-2">
-                            <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-                              <div 
-                                className="h-full bg-[#1429A9] rounded-full" 
+                            <div className="w-16 h-1.5 bg-slate-100 rounded-[5px] overflow-hidden border border-[#000000]/20">
+                              <div
+                                className="h-full bg-[#0038A8] rounded-[5px]"
                                 style={{ width: `${client.progress}%` }}
                               />
                             </div>
-                            <span className="text-[10px] text-slate-400 font-bold">{client.progress}%</span>
+                            <span className="text-[10px] text-[#808080] font-bold">{client.progress}%</span>
                           </div>
                         </td>
                         <td className="py-3.5 px-5">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${
-                            client.documentState === "Approved" || client.documentState === "Settled"
-                              ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                              : client.documentState === "Declined"
-                              ? "bg-rose-50 text-rose-600 border border-rose-100"
-                              : "bg-amber-50 text-amber-600 border border-amber-100"
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded-[5px] text-[9px] font-extrabold uppercase tracking-wider text-[#000000] ${getStatusBadgeBg(client.documentState)}`}>
                             {client.documentState === "Requested" ? "Action Req." : client.documentState}
                           </span>
                         </td>
-                        <td className="py-3.5 px-5 font-medium text-slate-500">
+                        <td className="py-3.5 px-5 font-medium text-[#808080]">
                           {client.applicationType}
                         </td>
-                        <td className="py-3.5 px-5 text-slate-500">
+                        <td className="py-3.5 px-5 text-[#808080]">
                           {client.dateStarted}
                         </td>
-                        <td className="py-3.5 px-5 text-right font-bold text-slate-800">
+                        <td className="py-3.5 px-5 text-right font-medium text-[#808080]">
                           ${client.amount.toLocaleString()}
                         </td>
                       </tr>
@@ -384,31 +395,31 @@ export default function DashboardTab() {
 
         {/* RIGHT COLUMN: CALENDAR FILTER & RECENT ACTIVITY LOGS */}
         <div className="xl:col-span-4 space-y-4">
-          
-          {/* Calendar Box Container (Sharp Edges, White/Blue palette) */}
-          <div className="bg-white border border-slate-200/80 p-3.5 shadow-soft-xl rounded-none">
-            
+
+          {/* Calendar Box Container */}
+          <div className="bg-white border border-[#0038A8] p-3.5 shadow-soft-xl rounded-[5px]">
+
             {/* Calendar Header with navigation & Inline Filter/Accept button */}
-            <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-100 select-none min-h-[32px]">
+            <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-[#0038A8]/20 select-none min-h-[32px]">
               {showRangeModal ? (
-                /* Inline Date Range Picker (Inputs made larger to match screen layout) */
-                <div className="flex items-center justify-between w-full gap-2 animate-fadeIn">
+                /* Inline Date Range Picker */
+                <div className="flex items-center justify-between w-full gap-2 animate-fadeIn font-['Poppins',sans-serif]">
                   <div className="flex items-center gap-1">
-                    <input 
-                      type="date" 
-                      value={rangeStart} 
-                      onChange={(e) => setRangeStart(e.target.value)} 
-                      className="bg-slate-50 border border-slate-200 text-xs px-2 py-1 rounded-none font-bold text-slate-800 focus:outline-none focus:border-[#1429A9] w-[105px]"
+                    <input
+                      type="date"
+                      value={rangeStart}
+                      onChange={(e) => setRangeStart(e.target.value)}
+                      className="bg-white border border-[#0038A8]/40 text-xs px-2 py-1 rounded-[5px] font-bold text-[#808080] focus:outline-none focus:border-[#0038A8] w-[105px]"
                     />
-                    <span className="text-[10px] text-slate-400 font-bold">→</span>
-                    <input 
-                      type="date" 
-                      value={rangeEnd} 
-                      onChange={(e) => setRangeEnd(e.target.value)} 
-                      className="bg-slate-50 border border-slate-200 text-xs px-2 py-1 rounded-none font-bold text-slate-800 focus:outline-none focus:border-[#1429A9] w-[105px]"
+                    <span className="text-[10px] text-[#808080] font-bold">→</span>
+                    <input
+                      type="date"
+                      value={rangeEnd}
+                      onChange={(e) => setRangeEnd(e.target.value)}
+                      className="bg-white border border-[#0038A8]/40 text-xs px-2 py-1 rounded-[5px] font-bold text-[#808080] focus:outline-none focus:border-[#0038A8] w-[105px]"
                     />
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
                       if (rangeStart && rangeEnd) {
                         setStartDate(rangeStart);
@@ -420,7 +431,7 @@ export default function DashboardTab() {
                         setShowRangeModal(false);
                       }
                     }}
-                    className="bg-[#1429A9] text-amber-400 hover:bg-[#1b32cc] font-extrabold text-[10px] px-3 py-1.5 rounded-none transition-all uppercase tracking-wider border border-[#1429A9] shrink-0"
+                    className="bg-gradient-to-r from-[#0038A8] to-[#002066] text-white font-extrabold text-[10px] px-3 py-1.5 rounded-[5px] transition-all uppercase tracking-wider border border-[#0038A8] shrink-0 hover:opacity-90 cursor-pointer font-['Poppins',sans-serif]"
                   >
                     Accept
                   </button>
@@ -429,25 +440,25 @@ export default function DashboardTab() {
                 /* Normal Header Month Navigation */
                 <>
                   <div className="flex items-center gap-1">
-                    <button 
+                    <button
                       onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
-                      className="p-1 hover:bg-slate-100 rounded-none text-slate-500 hover:text-slate-800 transition-colors"
+                      className="p-1 bg-gradient-to-r from-[#0038A8] to-[#002066] text-white rounded-[5px] hover:opacity-90 transition-opacity cursor-pointer"
                     >
-                      <ChevronLeft className="w-3.5 h-3.5" />
+                      <ChevronLeft className="w-3.5 h-3.5 text-white" />
                     </button>
-                    <span className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider">
+                    <span className="font-extrabold text-[#000000] text-[11px] uppercase tracking-wider px-1 font-['Inter',sans-serif]">
                       {currentMonth.toLocaleString("default", { month: "long", year: "numeric" })}
                     </span>
-                    <button 
+                    <button
                       onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
-                      className="p-1 hover:bg-slate-100 rounded-none text-slate-500 hover:text-slate-800 transition-colors"
+                      className="p-1 bg-gradient-to-r from-[#0038A8] to-[#002066] text-white rounded-[5px] hover:opacity-90 transition-opacity cursor-pointer"
                     >
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      <ChevronRight className="w-3.5 h-3.5 text-white" />
                     </button>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setShowRangeModal(true)}
-                    className="bg-[#1429A9] text-amber-400 hover:bg-[#1b32cc] font-extrabold text-[10px] px-3.5 py-1.5 rounded-none transition-all uppercase tracking-wider"
+                    className="bg-gradient-to-r from-[#0038A8] to-[#002066] text-white font-extrabold text-[10px] px-3.5 py-1.5 rounded-[5px] transition-all uppercase tracking-wider hover:opacity-90 cursor-pointer font-['Poppins',sans-serif]"
                   >
                     Filter
                   </button>
@@ -456,7 +467,7 @@ export default function DashboardTab() {
             </div>
 
             {/* Calendar Weekdays grid */}
-            <div className="grid grid-cols-7 text-center text-[10px] font-black text-slate-400 uppercase mb-2 select-none">
+            <div className="grid grid-cols-7 text-center text-[10px] font-black text-[#000000] uppercase mb-2 select-none font-['Inter',sans-serif]">
               <span>Sun</span>
               <span>Mon</span>
               <span>Tue</span>
@@ -472,12 +483,12 @@ export default function DashboardTab() {
               {Array.from({ length: firstDayIndex }).map((_, i) => (
                 <div key={`empty-${i}`} className="p-1.5 select-none" />
               ))}
-              
+
               {/* Actual calendar day buttons */}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                
+
                 // Highlight state indicators
                 const isSelected = dateStr === selectedDate;
                 const isInRange = isRangeActive && startDate && endDate && dateStr >= startDate && dateStr <= endDate;
@@ -496,13 +507,12 @@ export default function DashboardTab() {
                         setEndDate(null);
                       }
                     }}
-                    className={`p-1.5 font-bold transition-all text-center rounded-none select-none cursor-pointer ${
-                      isSelected || isInRange
-                        ? "bg-[#1429A9] text-white"
-                        : isCurrentDate
-                        ? "bg-[#1429A9]/10 text-[#1429A9] ring-1 ring-[#1429A9]/40"
-                        : "text-slate-700 hover:bg-[#1429A9]/10 hover:text-[#1429A9]"
-                    }`}
+                    className={`p-1.5 font-bold transition-all text-center rounded-[5px] select-none cursor-pointer font-['Inter',sans-serif] ${isSelected || isInRange
+                      ? "bg-gradient-to-r from-[#0038A8] to-[#002066] text-white"
+                      : isCurrentDate
+                        ? "bg-[#0038A8]/10 text-[#000000] ring-1 ring-[#0038A8]/40"
+                        : "text-[#000000] hover:bg-[#0038A8]/10"
+                      }`}
                   >
                     {day}
                   </button>
@@ -512,17 +522,17 @@ export default function DashboardTab() {
 
           </div>
 
-          {/* Activity Logs Container (Height matches the client summary list height exactly: h-[482px]) */}
-          <div className="bg-white border border-slate-200/80 p-3.5 shadow-soft-xl rounded-none flex flex-col h-[482px]">
-            <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider mb-2.5 pb-2 border-b border-slate-100 flex justify-between items-center select-none shrink-0">
+          {/* Activity Logs Container */}
+          <div className="bg-white border border-[#0038A8] p-3.5 shadow-soft-xl rounded-[5px] flex flex-col h-[482px]">
+            <h3 className="font-extrabold text-[#000000] text-xs uppercase tracking-wider mb-2.5 pb-2 border-b border-[#0038A8]/20 flex justify-between items-center select-none shrink-0 font-['Inter',sans-serif]">
               <span>Activity Log</span>
-              <span className="text-[10px] text-slate-400 font-bold font-mono">({filteredLogs.length} entries)</span>
+              <span className="text-[10px] text-[#808080] font-bold font-['Poppins',sans-serif]">({filteredLogs.length} entries)</span>
             </h3>
 
             {/* Log item entries grouped and sorted by Date, with minimize buttons */}
-            <div className="flex-1 overflow-y-auto pr-1 space-y-3">
+            <div className="flex-1 overflow-y-auto pr-1 space-y-3 font-['Poppins',sans-serif]">
               {sortedLogDates.length === 0 ? (
-                <p className="text-slate-400 text-center text-xs py-8 font-medium">No logs for selected timeframe.</p>
+                <p className="text-[#808080] text-center text-xs py-8 font-medium font-['Poppins',sans-serif]">No logs for selected timeframe.</p>
               ) : (
                 sortedLogDates.map((date) => {
                   const isMinimized = !!minimizedDates[date];
@@ -530,15 +540,16 @@ export default function DashboardTab() {
                   return (
                     <div key={date} className="space-y-2 border-b border-slate-100 pb-2 last:border-none">
                       {/* Date label slot with minimize/expand controls */}
-                      <div className="flex justify-between items-center select-none bg-slate-50 px-2 py-1 rounded-none border border-slate-100">
-                        <span className="text-[9px] font-black text-slate-500 tracking-wider">
+                      <div className="flex justify-between items-center select-none bg-slate-50 px-2 py-1 rounded-[5px] border border-slate-200">
+                        <span className="text-[9px] font-black text-[#000000] tracking-wider font-['Inter',sans-serif]">
                           {date === currentDateStr ? "Today" : date === "2026-08-23" ? "Yesterday" : "Previous"} ({date})
                         </span>
                         <button
                           onClick={() => setMinimizedDates({ ...minimizedDates, [date]: !isMinimized })}
-                          className="text-[9px] font-extrabold text-[#1429A9] uppercase hover:underline"
+                          className="bg-gradient-to-r from-[#0038A8] to-[#002066] text-white p-1 rounded-[5px] hover:opacity-90 transition-opacity cursor-pointer flex items-center justify-center font-['Poppins',sans-serif]"
+                          title={isMinimized ? "Expand" : "Minimize"}
                         >
-                          {isMinimized ? "Expand" : "Minimize"}
+                          {isMinimized ? <Plus className="w-3.5 h-3.5 text-white" /> : <Minus className="w-3.5 h-3.5 text-white" />}
                         </button>
                       </div>
 
@@ -546,9 +557,9 @@ export default function DashboardTab() {
                       {!isMinimized && (
                         <div className="space-y-2 pl-2">
                           {logsForDate.map((log) => (
-                            <div key={log.id} className="border-l border-[#1429A9]/35 pl-2 py-0.5">
-                              <div className="text-[9px] font-bold text-slate-400">{log.time}</div>
-                              <p className="text-slate-600 text-[11px] font-semibold">{log.message}</p>
+                            <div key={log.id} className="border-l-2 border-[#0038A8] pl-2 py-0.5">
+                              <div className="text-[9px] font-bold text-[#808080] font-['Poppins',sans-serif]">{log.time}</div>
+                              <p className="text-[#808080] text-[11px] font-semibold font-['Poppins',sans-serif]">{log.message}</p>
                             </div>
                           ))}
                         </div>
