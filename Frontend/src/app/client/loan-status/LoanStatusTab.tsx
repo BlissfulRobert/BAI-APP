@@ -7,15 +7,22 @@
  * ==============================================================================
  */
 
-import React from "react";
-import { Landmark, ArrowRight, Wallet, Percent, ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
+import Link from "next/link";
+import { Landmark, ArrowRight, Wallet, Percent, ShieldCheck, Mail, Calendar, ArrowLeft, Reply } from "lucide-react";
 import { Client } from "../../broker/MockData";
+import { BrokerEmail, initialBrokerEmails } from "../MockClientData";
 
 interface LoanStatusTabProps {
   client: Client;
 }
 
 export default function LoanStatusTab({ client }: LoanStatusTabProps) {
+  // ------------------------------------------------------------------------------
+  // 1. STATE DEFINITIONS
+  // ------------------------------------------------------------------------------
+  // Selected email for the inline viewer within the Loan Status communications container
+  const [selectedEmail, setSelectedEmail] = useState<BrokerEmail | null>(null);
   
   // Format currency helper
   const formatCurrency = (val: number) => {
@@ -147,6 +154,164 @@ export default function LoanStatusTab({ client }: LoanStatusTabProps) {
             </ul>
           </div>
         </div>
+
+      </div>
+
+      {/* ==================================================================== */}
+      {/* SECTION 2: RECENT BROKER COMMUNICATIONS CONTAINER                    */}
+      {/* Displays recent emails sent by the assigned broker with View All link */}
+      {/* to the Communications tab and inline email reader with identical UI.  */}
+      {/* ==================================================================== */}
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-soft-xl space-y-6">
+        
+        {/* ------------------------------------------------------------------ */}
+        {/* Container Header: Title & View All Redirection Link                */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="border-b border-slate-100 pb-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <Mail className="w-5 h-5 text-[#0024A8] shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-base font-extrabold text-slate-800 tracking-tight">
+                Recent Received Emails
+              </h3>
+              <p className="text-[11px] text-slate-400 font-medium truncate">
+                Official mortgage updates, lender document requests, and notifications
+              </p>
+            </div>
+          </div>
+
+          {/* "View all" link redirecting to Client Communication tab */}
+          <Link
+            href="/client/communication"
+            className="flex items-center gap-1.5 text-xs font-bold text-[#0024A8] hover:text-[#001D85] hover:underline shrink-0 group transition-colors"
+          >
+            <span>View all</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+
+        {/* ------------------------------------------------------------------ */}
+        {/* Conditional View: Inline Full Email Reader OR List of Emails       */}
+        {/* ------------------------------------------------------------------ */}
+        {selectedEmail ? (
+          /* ================================================================ */
+          /* SUBSECTION 2A: INLINE FULL EMAIL VIEWER (Same UI as container)   */
+          /* ================================================================ */
+          <div className="space-y-5 animate-fadeIn">
+            {/* Back navigation header */}
+            <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSelectedEmail(null)}
+                className="flex items-center gap-1.5 text-xs font-bold text-[#0024A8] hover:text-[#001D85] bg-blue-50/80 hover:bg-blue-100/70 border border-blue-200/60 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to recent emails</span>
+              </button>
+
+              <span className="text-[10px] font-extrabold text-[#0024A8] bg-blue-50 border border-blue-200/60 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                Secure Message Viewer
+              </span>
+            </div>
+
+            {/* Email Subject Title */}
+            <div>
+              <h4 className="text-base sm:text-lg font-extrabold text-slate-800 leading-snug">
+                {selectedEmail.subject}
+              </h4>
+            </div>
+
+            {/* Sender and Date Metadata Box */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/40 text-xs font-semibold">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#0024A8]/10 text-[#0024A8] flex items-center justify-center font-bold text-xs border border-[#0024A8]/15">
+                  SJ
+                </div>
+                <div>
+                  <span className="text-slate-800 font-bold block">{selectedEmail.sender}</span>
+                  <span className="text-[10px] text-slate-400 font-medium block">{selectedEmail.senderEmail}</span>
+                </div>
+              </div>
+
+              <div className="text-left sm:text-right">
+                <span className="text-[10px] text-slate-400 block uppercase">Received Date</span>
+                <span className="text-slate-700 block font-bold">{selectedEmail.date}</span>
+              </div>
+            </div>
+
+            {/* Email Body */}
+            <div className="p-5 rounded-2xl bg-slate-50/50 border border-slate-100 text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-line">
+              {selectedEmail.body}
+            </div>
+
+            {/* Bottom Actions: Close Reader & Reply Button */}
+            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 text-[10px] font-extrabold uppercase">
+              <button
+                type="button"
+                onClick={() => setSelectedEmail(null)}
+                className="py-2.5 px-5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all cursor-pointer"
+              >
+                Close Email
+              </button>
+
+              {/* Blue Reply button with white text (Placeholder: does nothing for now) */}
+              <button
+                type="button"
+                onClick={() => {
+                  // Intentional placeholder: does nothing for now as requested
+                }}
+                className="py-2.5 px-6 rounded-xl bg-[#0024A8] hover:bg-[#001D85] text-white font-extrabold shadow-md shadow-[#0024A8]/15 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Reply className="w-3.5 h-3.5" />
+                <span>Reply</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* ================================================================ */
+          /* SUBSECTION 2B: RECENT RECEIVED EMAILS LIST VIEW                  */
+          /* ================================================================ */
+          <div className="space-y-3">
+            {initialBrokerEmails.map((email) => (
+              <div
+                key={email.id}
+                onClick={() => setSelectedEmail(email)}
+                className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 hover:bg-blue-50/40 border border-slate-200/60 hover:border-[#0024A8]/30 transition-all cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs hover:shadow-xs"
+              >
+                {/* Email details preview */}
+                <div className="flex items-start gap-3.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-[#0024A8]/10 text-[#0024A8] font-black text-xs flex items-center justify-center shrink-0 border border-[#0024A8]/15 group-hover:scale-105 transition-transform">
+                    SJ
+                  </div>
+                  <div className="min-w-0 space-y-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-extrabold text-slate-800 group-hover:text-[#0024A8] transition-colors">
+                        {email.subject}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        • {email.sender}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 line-clamp-1 font-medium">
+                      {email.snippet}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Date & Open Arrow CTA */}
+                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{email.date}</span>
+                  </div>
+                  <div className="p-1.5 rounded-lg bg-white group-hover:bg-[#0024A8] text-slate-400 group-hover:text-white border border-slate-200/60 group-hover:border-transparent transition-all">
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
       </div>
     </div>

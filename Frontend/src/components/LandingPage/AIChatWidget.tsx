@@ -16,7 +16,7 @@
  *  - Fully styled to match BAI Finance theme (#0B2369, gradient highlights)
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Sparkles, X, Send, Bot, User, RefreshCw } from "lucide-react";
 import { aiApi } from "@/lib/api";
 
@@ -48,42 +48,69 @@ const SUGGESTED_PROMPTS = [
 ];
 
 /**
- * Component for smooth typewriter text animation on newly received AI responses
+ * Component for smooth active typewriter text animation on the newest AI response
  */
-function TypewriterMessage({
+function ActiveTypewriterMessage({
   content,
-  isAnimated,
   onTyping,
+  onComplete,
 }: {
   content: string;
-  isAnimated?: boolean;
   onTyping?: () => void;
+  onComplete?: () => void;
 }) {
-  const [displayedText, setDisplayedText] = useState(isAnimated ? "" : content);
+  const [displayedText, setDisplayedText] = useState("");
+  const onTypingRef = useRef(onTyping);
+  onTypingRef.current = onTyping;
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    if (!isAnimated) {
-      setDisplayedText(content);
-      return;
-    }
-
     let currentIndex = 0;
-    const speed = Math.max(8, Math.min(20, Math.floor(1500 / (content.length || 1)))); // dynamic speed based on length
+    const speed = Math.max(8, Math.min(20, Math.floor(1500 / (content.length || 1))));
 
     const interval = setInterval(() => {
       if (currentIndex < content.length) {
         setDisplayedText(content.slice(0, currentIndex + 1));
         currentIndex++;
-        onTyping?.();
+        onTypingRef.current?.();
       } else {
         clearInterval(interval);
+        onCompleteRef.current?.();
       }
     }, speed);
 
     return () => clearInterval(interval);
-  }, [content, isAnimated, onTyping]);
+  }, [content]);
 
   return <p className="whitespace-pre-wrap">{displayedText}</p>;
+}
+
+/**
+ * Typewriter message wrapper: renders static text for past replies, or typewriter for the latest reply
+ */
+function TypewriterMessage({
+  content,
+  isAnimated,
+  onTyping,
+  onComplete,
+}: {
+  content: string;
+  isAnimated?: boolean;
+  onTyping?: () => void;
+  onComplete?: () => void;
+}) {
+  if (!isAnimated) {
+    return <p className="whitespace-pre-wrap">{content}</p>;
+  }
+
+  return (
+    <ActiveTypewriterMessage
+      content={content}
+      onTyping={onTyping}
+      onComplete={onComplete}
+    />
+  );
 }
 
 export default function AIChatWidget() {
@@ -98,15 +125,21 @@ export default function AIChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom of chat when new messages appear or during typing
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
+
+  const handleTypingComplete = useCallback((messageId: string) => {
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === messageId ? { ...msg, isAnimated: false } : msg))
+    );
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
     }
-  }, [messages, isLoading, isOpen]);
+  }, [messages, isLoading, isOpen, scrollToBottom]);
 
   // ----------------------------------------------------------------------------
   // SECTION 2: MESSAGE SENDING HANDLER (RAG API INTEGRATION)
@@ -123,7 +156,11 @@ export default function AIChatWidget() {
       isAnimated: false,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Ensure all prior messages are set to static (isAnimated: false)
+    setMessages((prev) => [
+      ...prev.map((m) => ({ ...m, isAnimated: false })),
+      userMessage,
+    ]);
     setInputMessage("");
     setIsLoading(true);
 
@@ -137,7 +174,11 @@ export default function AIChatWidget() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         isAnimated: true,
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      // Make sure previous replies remain static, only the new reply animates
+      setMessages((prev) => [
+        ...prev.map((m) => ({ ...m, isAnimated: false })),
+        assistantMessage,
+      ]);
     } catch (err: unknown) {
       console.error("RAG Chat Error:", err);
       const errorMessage: ChatMessage = {
@@ -148,7 +189,10 @@ export default function AIChatWidget() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         isAnimated: false,
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [
+        ...prev.map((m) => ({ ...m, isAnimated: false })),
+        errorMessage,
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -225,49 +269,56 @@ export default function AIChatWidget() {
           {/* SUBSECTION 2B: MESSAGES DISPLAY AREA                                */}
           {/* ================================================================== */}
           <div className="flex-1 p-4 overflow-y-auto bg-slate-50/70 flex flex-col gap-3.5 text-xs">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex items-start gap-2.5 max-w-[88%] ${
-                  msg.role === "user" ? "self-end flex-row-reverse" : "self-start"
-                }`}
-              >
-                {msg.role === "assistant" ? (
-                  <div className="w-7 h-7 rounded-full bg-[#0B2369] text-white flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
-                    <User className="w-4 h-4" />
-                  </div>
-                )}
+            {(() => {
+              const lastAssistantId = messages
+                .filter((m) => m.role === "assistant")
+                .slice(-1)[0]?.id;
 
+              return messages.map((msg) => (
                 <div
-                  className={`p-3.5 rounded-2xl shadow-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-[#0B2369] text-white rounded-tr-xs"
-                      : "bg-white text-slate-700 rounded-tl-xs border border-slate-100"
+                  key={msg.id}
+                  className={`flex items-start gap-2.5 max-w-[88%] ${
+                    msg.role === "user" ? "self-end flex-row-reverse" : "self-start"
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <TypewriterMessage
-                      content={msg.content}
-                      isAnimated={msg.isAnimated}
-                      onTyping={scrollToBottom}
-                    />
+                    <div className="w-7 h-7 rounded-full bg-[#0B2369] text-white flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
+                      <Bot className="w-4 h-4" />
+                    </div>
                   ) : (
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
+                      <User className="w-4 h-4" />
+                    </div>
                   )}
-                  <span
-                    className={`block text-[10px] mt-1.5 ${
-                      msg.role === "user" ? "text-blue-200 text-right" : "text-slate-400"
+
+                  <div
+                    className={`p-3.5 rounded-2xl shadow-sm leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-[#0B2369] text-white rounded-tr-xs"
+                        : "bg-white text-slate-700 rounded-tl-xs border border-slate-100"
                     }`}
                   >
-                    {msg.timestamp}
-                  </span>
+                    {msg.role === "assistant" ? (
+                      <TypewriterMessage
+                        content={msg.content}
+                        isAnimated={msg.id === lastAssistantId && !!msg.isAnimated}
+                        onTyping={scrollToBottom}
+                        onComplete={() => handleTypingComplete(msg.id)}
+                      />
+                    ) : (
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                    )}
+                    <span
+                      className={`block text-[10px] mt-1.5 ${
+                        msg.role === "user" ? "text-blue-200 text-right" : "text-slate-400"
+                      }`}
+                    >
+                      {msg.timestamp}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
 
             {/* Pulsing 3-Dots Typing Indicator */}
             {isLoading && (

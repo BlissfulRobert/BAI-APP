@@ -110,3 +110,46 @@ export const initialMessages: ClientMessage[] = [
     timestamp: "2 hours ago"
   }
 ];
+
+// ------------------------------------------------------------------------------
+// INITIAL BROKER EMAILS (Communication and Loan Status feeds)
+// ------------------------------------------------------------------------------
+export interface BrokerEmail {
+  id: string;
+  sender: string;
+  senderEmail: string;
+  subject: string;
+  date: string;
+  body: string;
+  snippet: string;
+}
+
+export const initialBrokerEmails: BrokerEmail[] = [
+  {
+    id: "email-1",
+    sender: "Sarah Jenkins",
+    senderEmail: "sarah.jenkins@baifinance.com.au",
+    subject: "Westpac Statement Page 3 Missing",
+    date: "2026-08-23",
+    snippet: "Hi Emma, thanks for sending your documents. Upon reviewing your Westpac statement...",
+    body: "Hi Emma,\n\nThanks for sending over your mortgage documents. Upon reviewing your Westpac savings statement, it appears that page 3 is missing from the scanned copy. Could you please scan and upload the complete PDF through your client hub under the Bank Statement checklist category?\n\nOnce received, I will attach it to the file and submit it straight to the Macquarie Bank assessors. Let me know if you have any trouble uploading it.\n\nRegards,\nSarah Jenkins\nSenior Mortgage Broker\nBAI Finance"
+  },
+  {
+    id: "email-2",
+    sender: "Sarah Jenkins",
+    senderEmail: "sarah.jenkins@baifinance.com.au",
+    subject: "Initial Assessment Completed - Conditional LVR Approved",
+    date: "2026-08-21",
+    snippet: "Dear Emma, I have completed the initial assessment of your construction mortgage...",
+    body: "Dear Emma,\n\nI have completed the initial assessment of your construction mortgage application. Based on your deposit contribution of A$500,000 and strong salary stream, you qualify for a conditional LVR of 60.00% at an assumed interest rate of 5.85% p.a.\n\nPlease review the checklist in your client hub and upload your primary Government ID and Tax Documents so we can proceed with the formal valuation check.\n\nBest regards,\nSarah Jenkins\nSenior Mortgage Broker\nBAI Finance"
+  },
+  {
+    id: "email-3",
+    sender: "Sarah Jenkins",
+    senderEmail: "sarah.jenkins@baifinance.com.au",
+    subject: "Welcome to BAI Finance - Client Portal Activated",
+    date: "2026-08-19",
+    snippet: "Hi Emma, welcome to BAI Finance! My name is Sarah Jenkins, and I will be...",
+    body: "Hi Emma,\n\nWelcome to BAI Finance! My name is Sarah Jenkins, and I will be your designated mortgage broker. I will guide you step-by-step through your construction loan pre-approval process.\n\nYour secure client portal has now been activated. Please log in to complete your profile checklist and upload the requested initial files. Let me know if you have any questions.\n\nRegards,\nSarah Jenkins\nSenior Mortgage Broker\nBAI Finance"
+  }
+];
