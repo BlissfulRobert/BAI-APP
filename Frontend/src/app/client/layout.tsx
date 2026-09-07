@@ -23,6 +23,7 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
   const activeTab = getActiveTab(pathname);
   const { client } = useClient();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
@@ -57,9 +58,14 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
 
   const getHeaderTitle = () => {
     switch (activeTab) {
-      case "LoanStatus": return "Loan Status";
-      case "PaymentHistory": return "Payment History";
-      default: return activeTab;
+      case "Profile":        return "Client Page - Profile";
+      case "LoanStatus":     return "Customer Hub \u2014 Loan Status";
+      case "PaymentHistory": return "Customer Hub \u2014 Payment History";
+      case "Communication":  return "Customer Hub \u2014 Communication";
+      case "Bookings":       return "Customer Hub \u2014 Bookings";
+      case "Calculator":     return "Customer Hub \u2014 Calculator";
+      case "Notifications":  return "Customer Hub \u2014 Notifications";
+      default:               return activeTab;
     }
   };
 
@@ -71,9 +77,11 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 selection:bg-[#0024A8] selection:text-white antialiased client-portal-wrap">
       
       {/* Sidebar Navigation */}
-      <Sidebar 
-        activeTab={activeTab} 
-        clientName={client.name} 
+      <Sidebar
+        activeTab={activeTab}
+        clientName={client.name}
+        isCollapsed={isSidebarCollapsed}
+        onToggle={() => setIsSidebarCollapsed((prev) => !prev)}
       />
 
       {/* Content Wrapper */}
@@ -83,7 +91,7 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
         <header className="h-16 bg-white border-b border-slate-200/80 px-8 flex items-center justify-between shrink-0 select-none">
           <div>
             <h1 className="text-sm font-extrabold text-slate-800 tracking-tight">
-              Customer Hub — {getHeaderTitle()}
+              {getHeaderTitle()}
             </h1>
           </div>
 

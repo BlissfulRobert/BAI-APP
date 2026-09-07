@@ -9,8 +9,10 @@
  */
 
 import React, { useState } from "react";
-import { User, ShieldCheck, Landmark, Check, FileText, X, AlertCircle, Calendar, UploadCloud, Trash2, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { User, ShieldCheck, Landmark, Check, FileText, X, AlertCircle, Calendar, UploadCloud, Trash2, ArrowRight, Pen, Mail, Phone } from "lucide-react";
 import { Client, Booking } from "../../broker/MockData";
+import { dossierDocIcons } from "./dossierIcons";
 
 interface ProfileTabProps {
   client: Client;
@@ -20,13 +22,59 @@ interface ProfileTabProps {
 
 type DossierCategory = "Personal" | "Financial" | "Employment" | "Collateral" | "Liabilities" | "All";
 
+/**
+ * ==============================================================================
+ * SUB-COMPONENT: CountryFlag
+ * Description: Renders a high-resolution SVG flag graphic to ensure consistent,
+ *              crisp visual presentation across all operating systems and browsers
+ *              (avoiding OS emoji font discrepancies such as plain two-letter codes).
+ * ==============================================================================
+ */
+function CountryFlag({ isPhilippines }: { isPhilippines: boolean }) {
+  if (isPhilippines) {
+    return (
+      <svg
+        className="w-5 h-3.5 rounded-[2px] shadow-2xs inline-block shrink-0 border border-slate-200/50"
+        viewBox="0 0 600 300"
+        aria-label="Flag of Philippines"
+      >
+        <rect width="600" height="150" fill="#0038A8" />
+        <rect y="150" width="600" height="150" fill="#CE1126" />
+        <polygon points="0,0 260,150 0,300" fill="#FFFFFF" />
+        <circle cx="85" cy="150" r="28" fill="#FCD116" />
+        <polygon points="215,150 205,153 210,145" fill="#FCD116" />
+        <polygon points="45,45 55,50 48,40" fill="#FCD116" />
+        <polygon points="45,255 55,250 48,260" fill="#FCD116" />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      className="w-5 h-3.5 rounded-[2px] shadow-2xs inline-block shrink-0 border border-slate-200/50"
+      viewBox="0 0 1200 600"
+      aria-label="Flag of Australia"
+    >
+      <rect width="1200" height="600" fill="#00008B" />
+      <path d="M0,0 L600,300 M600,0 L0,300" stroke="#FFFFFF" strokeWidth="60" />
+      <path d="M0,0 L600,300 M600,0 L0,300" stroke="#CC0000" strokeWidth="40" />
+      <path d="M300,0 V300 M0,150 H600" stroke="#FFFFFF" strokeWidth="100" />
+      <path d="M300,0 V300 M0,150 H600" stroke="#CC0000" strokeWidth="60" />
+    </svg>
+  );
+}
+
 export default function ProfileTab({ client, setClient, onLogAction }: ProfileTabProps) {
   // ------------------------------------------------------------------------------
-  // STATE DEFINITIONS
+  // 1. STATE DEFINITIONS
   // ------------------------------------------------------------------------------
+
+  // 1A. Dossier active tab filter
   const [activeDossierTab, setActiveDossierTab] = useState<DossierCategory>("All");
   
-  // Profile Edit State Managers
+  // 1B. Profile cover banner theme switcher ("blue" or "gold")
+  const [bannerTheme, setBannerTheme] = useState<"blue" | "gold">("blue");
+
+  // 1C. Profile Edit modal form fields
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editPhone, setEditPhone] = useState("");
   const [editEmail, setEditEmail] = useState("");
@@ -36,6 +84,21 @@ export default function ProfileTab({ client, setClient, onLogAction }: ProfileTa
   const [editPosition, setEditPosition] = useState("");
   const [editAddress, setEditAddress] = useState("");
 
+  // ------------------------------------------------------------------------------
+  // 2. THEME & PROFILE MODAL HANDLERS
+  // ------------------------------------------------------------------------------
+
+  /**
+   * Toggles the top cover background between the theme-aligned Blue gradient
+   * and the warm luxury Gold gradient.
+   */
+  const toggleBannerTheme = () => {
+    setBannerTheme(prev => (prev === "blue" ? "gold" : "blue"));
+  };
+
+  /**
+   * Populates edit modal inputs with current client profile data and displays modal.
+   */
   const openEditModal = () => {
     setEditPhone(client.phone);
     setEditEmail(client.email);
@@ -43,10 +106,13 @@ export default function ProfileTab({ client, setClient, onLogAction }: ProfileTa
     setEditCivilStatus(client.profile.civilStatus);
     setEditEmployer(client.employment.employerBusiness);
     setEditPosition(client.employment.position);
-    setEditAddress(client.loan.purpose);
+    setEditAddress(client.profile?.address || client.loan?.purpose || "");
     setIsEditOpen(true);
   };
 
+  /**
+   * Saves updated client details to parent state and logs activity.
+   */
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     setClient(prev => ({
@@ -55,6 +121,7 @@ export default function ProfileTab({ client, setClient, onLogAction }: ProfileTa
       email: editEmail,
       profile: {
         ...prev.profile,
+        address: editAddress,
         dob: editDob,
         civilStatus: editCivilStatus
       },
@@ -320,76 +387,158 @@ export default function ProfileTab({ client, setClient, onLogAction }: ProfileTa
     <div className="space-y-6 animate-fadeIn">
       
       {/* ==================================================================== */}
-      {/* 1. WELCOME CONTAINER & PROFILE PICTURE (TOP CONTAINER)               */}
+      {/* SECTION 1: CLIENT PROFILE HERO CARD                                  */}
+      {/* Renders cover banner with theme toggle, overlapping circular avatar,  */}
+      {/* bold name, country flag + address, and contact information.          */}
       {/* ==================================================================== */}
-      <div className="bg-[#0024A8] text-white rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md shadow-[#0024A8]/10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          {/* Profile Avatar bubble */}
-          <div className="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center text-white font-black text-3xl shrink-0 border border-white/20 shadow-inner">
-            {client.name.split(" ").map(w => w[0]).join("")}
-          </div>
-          
-          <div className="text-center sm:text-left space-y-1">
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-              Welcome! {client.name}
-            </h2>
-            <p className="text-xs text-sky-100/70 font-semibold tracking-wide flex items-center justify-center sm:justify-start gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>Secure Client Dashboard Workspace</span>
-            </p>
-          </div>
-        </div>
+      {(() => {
+        // Resolve client address and determine country flag
+        const addressText = client.profile?.address || "Block 15 Lot 4, Park Place, Alabang, Muntinlupa, Philippines";
+        const isPhilippines = addressText.toLowerCase().includes("philippines") || client.profile?.nationality?.toLowerCase().includes("filipino");
 
-        {/* Edit Profile Button on the top right of the Welcome Container */}
-        <button
-          onClick={openEditModal}
-          className="self-start sm:self-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/10 text-xs font-bold rounded-xl transition-all relative z-10 shrink-0 shadow-2xs"
-        >
-          Edit Profile
-        </button>
-      </div>
+        return (
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden animate-fadeIn">
+            
+            {/* ------------------------------------------------------------------ */}
+            {/* SUBSECTION 1A: COVER BANNER WITH THEME SWITCHER PEN                */}
+            {/* Toggles between Blue gradient (theme default) and luxury Gold      */}
+            {/* ------------------------------------------------------------------ */}
+            <div
+              className={`relative h-36 sm:h-44 w-full transition-all duration-500 overflow-hidden ${
+                bannerTheme === "blue"
+                  ? "bg-gradient-to-r from-[#001B79] via-[#0024A8] to-[#1E40AF]"
+                  : "bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#FBBF24]"
+              }`}
+            >
+              {/* Ambient radial blur highlights for depth */}
+              <div className="absolute top-0 right-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-10 w-36 h-36 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
-      {/* ==================================================================== */}
-      {/* 2. SPLIT LAYOUT PANEL                                                */}
-      {/* ==================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* LEFT COLUMN: PERSONAL INFO DOSSIER & DOCUMENT SUBMISSIONS          */}
-        <div className="lg:col-span-7 space-y-6">
-          
-          {/* Dossier Folders Container */}
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-soft-xl space-y-6">
-            <div className="border-b border-slate-100 pb-3.5 flex flex-wrap gap-1.5">
-              {(["All", "Personal", "Financial", "Employment", "Collateral", "Liabilities"] as DossierCategory[]).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveDossierTab(tab)}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition-colors ${
-                    activeDossierTab === tab
-                      ? "bg-[#0024A8] text-white"
-                      : "bg-slate-50 text-slate-400 hover:text-slate-700 border border-slate-200/40"
-                  }`}
-                >
-                  {tab === "All" ? "All View" : tab}
-                </button>
-              ))}
+              {/* Theme Toggle Pen Button (top-right of profile background) */}
+              <button
+                type="button"
+                onClick={toggleBannerTheme}
+                title={`Switch banner to ${bannerTheme === "blue" ? "Gold" : "Blue"} theme`}
+                className="absolute top-4 right-4 z-10 p-2 sm:px-3 sm:py-1.5 rounded-full bg-black/25 hover:bg-black/45 text-white backdrop-blur-md border border-white/25 transition-all hover:scale-105 active:scale-95 shadow-md flex items-center gap-1.5 text-xs font-semibold cursor-pointer group"
+                aria-label="Switch banner theme between Blue and Gold"
+              >
+                <Pen className="w-3.5 h-3.5 transition-transform group-hover:rotate-12" />
+                <span className="hidden sm:inline text-[11px] font-medium text-white/90">
+                  {bannerTheme === "blue" ? "Gold Theme" : "Blue Theme"}
+                </span>
+              </button>
             </div>
 
-            {renderActiveDossierContent()}
+            {/* ------------------------------------------------------------------ */}
+            {/* SUBSECTION 1B: CARD BODY WITH OVERLAPPING CIRCULAR AVATAR          */}
+            {/* relative z-10 and z-20 ensure avatar cleanly overlays the banner    */}
+            {/* ------------------------------------------------------------------ */}
+            <div className="relative z-10 px-6 sm:px-8 pb-6">
+              
+              {/* Avatar & Edit Profile Action Row */}
+              <div className="relative z-20 flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 mb-3">
+                {/* Circular Profile Picture / Initials Avatar */}
+                <div className="relative z-20 w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-[#0024A8] to-[#0B2369] text-white flex items-center justify-center font-black text-2xl sm:text-3xl shrink-0 select-none">
+                  {client.name.split(" ").map((w) => w[0]).join("")}
+                </div>
+
+                {/* Edit Profile CTA Button */}
+                <button
+                  type="button"
+                  onClick={openEditModal}
+                  className="self-start sm:self-end px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 text-xs font-bold rounded-xl transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+                >
+                  Edit Profile
+                </button>
+              </div>
+
+              {/* ---------------------------------------------------------------- */}
+              {/* SUBSECTION 1C: CLIENT INFORMATION DETAILS                        */}
+              {/* Full name (bold), Address + Country (with flag), Email & Phone   */}
+              {/* ---------------------------------------------------------------- */}
+              <div className="space-y-1.5">
+                {/* 1. Full Client Name in Bold */}
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  {client.name}
+                </h2>
+
+                {/* 2. Country Flag and Address (Lower shade of gray for high legibility) */}
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-400">
+                  <CountryFlag isPhilippines={isPhilippines} />
+                  <span>{addressText}</span>
+                </div>
+
+                {/* 3. Contact Row: Email on the left, Phone number on the right */}
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-slate-600 font-semibold pt-2 mt-2 border-t border-slate-100">
+                  {/* Email (Left) */}
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span className="truncate">{client.email}</span>
+                  </div>
+
+                  {/* Phone Number (Right) */}
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span>{client.phone}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ==================================================================== */}
+      {/* 2. MAIN PROFILE CONTAINER (wraps all sub-sections)                   */}
+      {/* ==================================================================== */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          {/* LEFT COLUMN: PERSONAL INFO DOSSIER */}
+          <div className="lg:col-span-7 space-y-5">
+
+            {/* Dossier Folders Sub-Container */}
+            <div className="border border-slate-200/60 rounded-lg p-5 space-y-4">
+
+              {/* Connected Filter Tab Strip */}
+              <div className="flex border-b border-slate-200 overflow-x-auto -mx-5 px-5">
+                {(["All", "Personal", "Financial", "Employment", "Collateral", "Liabilities"] as DossierCategory[]).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveDossierTab(tab)}
+                    className={`px-3.5 py-2.5 text-[10px] font-extrabold uppercase tracking-wider transition-all border-b-2 -mb-px whitespace-nowrap ${
+                      activeDossierTab === tab
+                        ? "border-[#0024A8] text-[#0024A8]"
+                        : "border-transparent text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    {tab === "All" ? "All View" : tab}
+                  </button>
+                ))}
+              </div>
+
+              {renderActiveDossierContent()}
+            </div>
+
           </div>
 
-        </div>
+          {/* RIGHT COLUMN: LOAN STATUS & DOCUMENT CHECKLIST */}
+          <div className="lg:col-span-5 space-y-5">
 
-        {/* RIGHT COLUMN: PROGRESS, AGENDA, & NOTIFICATIONS FEED                */}
-        <div className="lg:col-span-5 space-y-6">
-          
-          {/* Progress Container (Timeline checklist) */}
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-soft-xl space-y-6">
-            <h3 className="text-base font-extrabold text-slate-800">
-              Loan Status Checklist
-            </h3>
+            {/* Loan Status Sub-Container */}
+            <div className="border border-slate-200/60 rounded-lg p-5 space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-extrabold text-slate-800">
+                  Loan Status Checklist
+                </h3>
+                <Link
+                  href="/client/loan-status"
+                  className="flex items-center gap-1 text-[10px] font-bold text-[#0024A8] hover:underline"
+                >
+                  View All <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
 
             {/* Stepper progress stages */}
             <div className="space-y-6 relative pl-3.5 before:absolute before:left-7.5 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-100">
@@ -448,13 +597,13 @@ export default function ProfileTab({ client, setClient, onLogAction }: ProfileTa
               </div>
 
             </div>
-          </div>
+            </div>
 
-          {/* Dossier Document Checklist */}
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-soft-xl space-y-4">
-            <h3 className="text-base font-extrabold text-slate-800 pb-2 border-b border-slate-100">
-              Dossier Document Checklist
-            </h3>
+            {/* Dossier Document Checklist Sub-Container */}
+            <div className="border border-slate-200/60 rounded-lg p-5 space-y-4">
+              <h3 className="text-base font-extrabold text-slate-800 pb-2 border-b border-slate-100">
+                Dossier Document Checklist
+              </h3>
             
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -480,7 +629,12 @@ export default function ProfileTab({ client, setClient, onLogAction }: ProfileTa
                       onClick={() => openUploadModal(doc.name)}
                       className="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition-colors"
                     >
-                      <td className="py-3 px-3 text-[#0024A8] font-bold">{doc.name}</td>
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2">
+                          {(() => { const DocIcon = dossierDocIcons[doc.name]; return DocIcon ? <DocIcon className="w-3.5 h-3.5 text-[#0024A8] shrink-0" /> : null; })()}
+                          <span className="text-[#0024A8] font-bold">{doc.name}</span>
+                        </div>
+                      </td>
                       <td className="py-3 px-3 text-right">
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${
                           doc.status === "Verified"
@@ -499,10 +653,11 @@ export default function ProfileTab({ client, setClient, onLogAction }: ProfileTa
                 </tbody>
               </table>
             </div>
+            </div>
+
           </div>
 
         </div>
-
       </div>
 
       {/* ==================================================================== */}

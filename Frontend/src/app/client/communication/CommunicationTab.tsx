@@ -8,51 +8,14 @@
  */
 
 import React, { useState } from "react";
-import { Mail, Search, X, Calendar, User, ArrowRight } from "lucide-react";
-
-interface BrokerEmail {
-  id: string;
-  sender: string;
-  senderEmail: string;
-  subject: string;
-  date: string;
-  body: string;
-  snippet: string;
-}
+import { Mail, Search, X, Calendar, User, ArrowRight, Reply } from "lucide-react";
+import { BrokerEmail, initialBrokerEmails } from "../MockClientData";
 
 export default function CommunicationTab() {
   // ------------------------------------------------------------------------------
   // STATIC BROKER EMAILS DATA
   // ------------------------------------------------------------------------------
-  const brokerEmails: BrokerEmail[] = [
-    {
-      id: "email-1",
-      sender: "Sarah Jenkins",
-      senderEmail: "sarah.jenkins@baifinance.com.au",
-      subject: "Westpac Statement Page 3 Missing",
-      date: "2026-08-23",
-      snippet: "Hi Emma, thanks for sending your documents. Upon reviewing your Westpac statement...",
-      body: "Hi Emma,\n\nThanks for sending over your mortgage documents. Upon reviewing your Westpac savings statement, it appears that page 3 is missing from the scanned copy. Could you please scan and upload the complete PDF through your client hub under the Bank Statement checklist category?\n\nOnce received, I will attach it to the file and submit it straight to the Macquarie Bank assessors. Let me know if you have any trouble uploading it.\n\nRegards,\nSarah Jenkins\nSenior Mortgage Broker\nBAI Finance"
-    },
-    {
-      id: "email-2",
-      sender: "Sarah Jenkins",
-      senderEmail: "sarah.jenkins@baifinance.com.au",
-      subject: "Initial Assessment Completed - Conditional LVR Approved",
-      date: "2026-08-21",
-      snippet: "Dear Emma, I have completed the initial assessment of your construction mortgage...",
-      body: "Dear Emma,\n\nI have completed the initial assessment of your construction mortgage application. Based on your deposit contribution of A$500,000 and strong salary stream, you qualify for a conditional LVR of 60.00% at an assumed interest rate of 5.85% p.a.\n\nPlease review the checklist in your client hub and upload your primary Government ID and Tax Documents so we can proceed with the formal valuation check.\n\nBest regards,\nSarah Jenkins\nSenior Mortgage Broker\nBAI Finance"
-    },
-    {
-      id: "email-3",
-      sender: "Sarah Jenkins",
-      senderEmail: "sarah.jenkins@baifinance.com.au",
-      subject: "Welcome to BAI Finance - Client Portal Activated",
-      date: "2026-08-19",
-      snippet: "Hi Emma, welcome to BAI Finance! My name is Sarah Jenkins, and I will be...",
-      body: "Hi Emma,\n\nWelcome to BAI Finance! My name is Sarah Jenkins, and I will be your designated mortgage broker. I will guide you step-by-step through your construction loan pre-approval process.\n\nYour secure client portal has now been activated. Please log in to complete your profile checklist and upload the requested initial files. Let me know if you have any questions.\n\nRegards,\nSarah Jenkins\nSenior Mortgage Broker\nBAI Finance"
-    }
-  ];
+  const brokerEmails: BrokerEmail[] = initialBrokerEmails;
 
   // ------------------------------------------------------------------------------
   // STATE DEFINITIONS
@@ -185,13 +148,26 @@ export default function CommunicationTab() {
               {selectedEmail.body}
             </div>
 
-            {/* Close action button */}
-            <div className="flex justify-end pt-4 border-t border-slate-100 shrink-0 text-[10px] font-extrabold uppercase">
+            {/* Action buttons: Exit Reader and Reply */}
+            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 shrink-0 text-[10px] font-extrabold uppercase">
               <button
+                type="button"
                 onClick={() => setSelectedEmail(null)}
-                className="py-2.5 px-5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all"
+                className="py-2.5 px-5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all cursor-pointer"
               >
                 Exit Reader
+              </button>
+
+              {/* Blue Reply button with white text (Placeholder action: does nothing for now) */}
+              <button
+                type="button"
+                onClick={() => {
+                  // Intentional placeholder: does nothing for now per instructions
+                }}
+                className="py-2.5 px-6 rounded-xl bg-[#0024A8] hover:bg-[#001D85] text-white font-extrabold shadow-md shadow-[#0024A8]/15 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Reply className="w-3.5 h-3.5" />
+                <span>Reply</span>
               </button>
             </div>
 
