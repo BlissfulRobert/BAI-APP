@@ -73,8 +73,10 @@ function ClientLayoutContent({ children }: { children: React.ReactNode }) {
     ? client.name.split(" ").map((w) => w[0]).join("")
     : "CU";
 
+  const isWhiteBg = activeTab === "LoanStatus";
+
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 selection:bg-[#0024A8] selection:text-white antialiased client-portal-wrap">
+    <div className={`min-h-screen ${isWhiteBg ? "bg-white" : "bg-[#F2F2F2]"} flex font-sans text-slate-900 selection:bg-[#0024A8] selection:text-white antialiased client-portal-wrap`}>
       
       {/* Sidebar Navigation */}
       <Sidebar

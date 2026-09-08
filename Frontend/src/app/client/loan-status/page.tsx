@@ -5,7 +5,7 @@ import { useClient } from "../ClientContext";
 import LoanStatusTab from "./LoanStatusTab";
 
 export default function ClientLoanStatusPage() {
-  const { client } = useClient();
+  const { client, handleLogAction } = useClient();
 
-  return <LoanStatusTab client={client} />;
+  return <LoanStatusTab client={client} onLogAction={handleLogAction} />;
 }

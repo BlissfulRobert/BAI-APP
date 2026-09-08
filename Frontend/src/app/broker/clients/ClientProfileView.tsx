@@ -122,32 +122,44 @@ export default function ClientProfileView({ client, onBack }: ClientProfileViewP
           {activeSubTab === "Profile" && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Full Name</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.name}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Full Legal Name</span>
+                <span className="text-sm font-semibold text-slate-700 block">{client.profile?.fullLegalName || client.name}</span>
               </div>
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Date of Birth</span>
                 <span className="text-sm font-semibold text-slate-700 block">{client.profile.dob}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mobile</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.profile.mobile}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Place of Birth</span>
+                <span className="text-sm font-semibold text-slate-700 block">{client.profile.placeOfBirth || "N/A"}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Email Address</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.email}</span>
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Residential Address</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.profile.address}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Nationality</span>
+                <span className="text-sm font-semibold text-slate-700 block">{client.profile.nationality}</span>
               </div>
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Civil Status</span>
                 <span className="text-sm font-semibold text-slate-700 block">{client.profile.civilStatus}</span>
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Nationality</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.profile.nationality}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Number of Dependents</span>
+                <span className="text-sm font-semibold text-slate-700 block">{client.profile.numberOfDependents ?? 0}</span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mobile Number</span>
+                <span className="text-sm font-semibold text-slate-700 block">{client.profile.mobile || client.phone}</span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Email Address</span>
+                <span className="text-sm font-semibold text-slate-700 block">{client.profile.email || client.email}</span>
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Residential Address</span>
+                <span className="text-sm font-semibold text-slate-700 block">{client.profile.residentialAddress || client.profile.address}</span>
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Current / Previous Address</span>
+                <span className="text-sm font-semibold text-slate-700 block">{client.profile.previousAddress || "N/A"}</span>
               </div>
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ID Verification Type</span>
@@ -232,49 +244,121 @@ export default function ClientProfileView({ client, onBack }: ClientProfileViewP
 
           {/* COLLATERAL DATA FIELDS */}
           {activeSubTab === "Collateral" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Has Collateral Asset?</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.collateral.hasCollateral}</span>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Collateral Type</span>
+                  <span className="text-sm font-semibold text-slate-700 block">{client.collateral.collateralType || "N/A"}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ownership Status</span>
+                  <span className="text-sm font-semibold text-slate-700 block">{client.collateral.ownership || "N/A"}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Estimated Value</span>
+                  <span className="text-sm font-bold text-[#0B2369] block">{client.collateral.estimatedValue > 0 ? formatCurrency(client.collateral.estimatedValue) : "N/A"}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Appraised Value</span>
+                  <span className="text-sm font-bold text-emerald-700 block">{client.collateral.appraisedValue ? formatCurrency(client.collateral.appraisedValue) : "N/A"}</span>
+                </div>
+                <div className="space-y-1 md:col-span-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Location</span>
+                  <span className="text-sm font-semibold text-slate-700 block">{client.collateral.location || client.profile?.residentialAddress || client.profile?.address}</span>
+                </div>
+                <div className="space-y-1 md:col-span-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Description</span>
+                  <span className="text-sm font-medium text-slate-600 leading-relaxed block bg-slate-50 p-3.5 rounded-xl border border-slate-100">{client.collateral.description || "N/A"}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Condition</span>
+                  <span className="text-sm font-semibold text-slate-700 block">{client.collateral.condition || "N/A"}</span>
+                </div>
+                <div className="space-y-1 md:col-span-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Existing Mortgages or Financing encumbrances</span>
+                  <span className="text-sm font-semibold text-slate-700 block">{client.collateral.existingMortgage || "None"}</span>
+                </div>
               </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Collateral Security Type</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.collateral.collateralType || "N/A"}</span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Estimated Value</span>
-                <span className="text-sm font-bold text-[#0B2369] block">{client.collateral.estimatedValue > 0 ? formatCurrency(client.collateral.estimatedValue) : "N/A"}</span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Asset Ownership Status</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.collateral.ownership || "N/A"}</span>
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Existing Mortgages or Financing encumbrances</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.collateral.existingMortgage || "None"}</span>
-              </div>
+
+              {client.collateral.requiredDocuments && client.collateral.requiredDocuments.length > 0 && (
+                <div className="pt-4 border-t border-slate-100 space-y-3">
+                  <span className="text-[10px] font-bold text-[#0B2369] uppercase tracking-wider block">Collateral Documents Needed</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-semibold">
+                    {client.collateral.requiredDocuments.map((doc, i) => (
+                      <div key={i} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                        <span className="text-slate-700">{doc}</span>
+                        <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase">Required</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* OBLIGATIONS DATA FIELDS */}
           {activeSubTab === "Obligations" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Has Existing Loans?</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.obligations.hasExistingLoans}</span>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-4 border-b border-slate-100">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Has Existing Loans?</span>
+                  <span className="text-sm font-semibold text-slate-700 block">{client.obligations.hasExistingLoans}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Existing Debt Balance</span>
+                  <span className="text-sm font-semibold text-slate-700 block">{formatCurrency(client.obligations.existingLoanAmount)}</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Monthly Debt Payments</span>
+                  <span className="text-sm font-semibold text-rose-600 block">{formatCurrency(client.obligations.monthlyDebtPayments)} / month</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Number of Active Loans</span>
+                  <span className="text-sm font-semibold text-slate-700 block">{client.obligations.numExistingLoans}</span>
+                </div>
               </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Existing Debt Balance</span>
-                <span className="text-sm font-semibold text-slate-700 block">{formatCurrency(client.obligations.existingLoanAmount)}</span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Monthly Debt Payments</span>
-                <span className="text-sm font-semibold text-rose-600 block">{formatCurrency(client.obligations.monthlyDebtPayments)} / month</span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Number of Active Loans</span>
-                <span className="text-sm font-semibold text-slate-700 block">{client.obligations.numExistingLoans}</span>
-              </div>
+
+              {client.obligations.items && client.obligations.items.length > 0 && (
+                <div className="space-y-3">
+                  <span className="text-[10px] font-bold text-[#0B2369] uppercase tracking-wider block">Detailed Liabilities Breakdown</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {client.obligations.items.map((item, idx) => (
+                      <div key={idx} className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-3">
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-200/60">
+                          <span className="font-extrabold text-xs text-slate-800">{item.liabilityType}</span>
+                          <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">{item.paymentStatus}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
+                          <div>
+                            <span className="text-[10px] text-slate-400 block uppercase">Creditor</span>
+                            <span className="text-slate-700">{item.creditor}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block uppercase">Balance</span>
+                            <span className="text-rose-600 font-bold">{formatCurrency(item.outstandingBalance)}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block uppercase">Monthly Payment</span>
+                            <span className="text-slate-700">{formatCurrency(item.monthlyPayment)} / mo</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block uppercase">Interest Rate</span>
+                            <span className="text-slate-700">{item.interestRate}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block uppercase">Loan Term</span>
+                            <span className="text-slate-700">{item.loanTerm}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 block uppercase">Remaining Term</span>
+                            <span className="text-slate-700">{item.remainingTerm}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -284,56 +368,56 @@ export default function ClientProfileView({ client, onBack }: ClientProfileViewP
               
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between gap-4">
                 <span className="text-xs font-bold text-slate-700">Government ID</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.governmentId)}`}>
+                <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.governmentId)}`}>
                   {client.documents.governmentId}
                 </span>
               </div>
 
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between gap-4">
                 <span className="text-xs font-bold text-slate-700">Proof of Income</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.proofOfIncome)}`}>
+                <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.proofOfIncome)}`}>
                   {client.documents.proofOfIncome}
                 </span>
               </div>
 
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between gap-4">
                 <span className="text-xs font-bold text-slate-700">Bank Statement</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.bankStatement)}`}>
+                <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.bankStatement)}`}>
                   {client.documents.bankStatement}
                 </span>
               </div>
 
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between gap-4">
                 <span className="text-xs font-bold text-slate-700">Tax Documents</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.taxDocuments)}`}>
+                <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.taxDocuments)}`}>
                   {client.documents.taxDocuments}
                 </span>
               </div>
 
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between gap-4">
                 <span className="text-xs font-bold text-slate-700">Employment Documents</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.employmentDocs)}`}>
+                <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.employmentDocs)}`}>
                   {client.documents.employmentDocs}
                 </span>
               </div>
 
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between gap-4">
                 <span className="text-xs font-bold text-slate-700">Business Documents</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.businessDocs)}`}>
+                <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.businessDocs)}`}>
                   {client.documents.businessDocs}
                 </span>
               </div>
 
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between gap-4">
                 <span className="text-xs font-bold text-slate-700">Collateral Documents</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.collateralDocs)}`}>
+                <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.collateralDocs)}`}>
                   {client.documents.collateralDocs}
                 </span>
               </div>
 
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between gap-4">
                 <span className="text-xs font-bold text-slate-700">Other Documents</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.otherDocs)}`}>
+                <span className={`px-2.5 py-0.5 rounded-[5px] text-[10px] font-extrabold uppercase ${getDocStatusBadge(client.documents.otherDocs)}`}>
                   {client.documents.otherDocs}
                 </span>
               </div>

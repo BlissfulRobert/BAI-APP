@@ -7,11 +7,17 @@
  */
 
 export interface ClientProfile {
+  fullLegalName: string;
   dob: string;
-  mobile: string;
-  address: string;
-  civilStatus: "Single" | "Married" | "De Facto" | "Divorced" | "Widowed";
+  placeOfBirth: string;
   nationality: string;
+  civilStatus: "Single" | "Married" | "De Facto" | "Divorced" | "Widowed";
+  numberOfDependents: number;
+  residentialAddress: string;
+  address: string;
+  previousAddress: string;
+  mobile: string;
+  email: string;
   idType: string;
   idNumber: string;
 }
@@ -35,19 +41,36 @@ export interface ClientEmployment {
   otherIncome: number;
 }
 
+export interface LiabilityItem {
+  liabilityType: string;
+  creditor: string;
+  outstandingBalance: number;
+  monthlyPayment: number;
+  interestRate: string;
+  loanTerm: string;
+  remainingTerm: string;
+  paymentStatus: "Current" | "Pending" | "Overdue";
+}
+
 export interface ClientObligations {
   hasExistingLoans: "Yes" | "No";
   existingLoanAmount: number;
   monthlyDebtPayments: number;
   numExistingLoans: number;
+  items?: LiabilityItem[];
 }
 
 export interface ClientCollateral {
   hasCollateral: "Yes" | "No";
   collateralType: string;
+  description?: string;
   estimatedValue: number;
+  appraisedValue?: number;
+  location?: string;
   ownership: string;
+  condition?: string;
   existingMortgage: string;
+  requiredDocuments?: string[];
 }
 
 export interface ClientDocuments {
@@ -146,11 +169,17 @@ export const initialClients: Client[] = [
     progress: 80,
     notes: "Reviewing tax returns for self-employed income.",
     profile: {
+      fullLegalName: "Alice Jane Smith",
       dob: "1988-11-12",
-      mobile: "+61 498 765 432",
-      address: "24 Alfred St, Milsons Point NSW 2061, Australia",
-      civilStatus: "Married",
+      placeOfBirth: "Sydney, Australia",
       nationality: "Australian",
+      civilStatus: "Married",
+      numberOfDependents: 2,
+      residentialAddress: "24 Alfred St, Milsons Point NSW 2061, Australia",
+      address: "24 Alfred St, Milsons Point NSW 2061, Australia",
+      previousAddress: "15 Ocean St, Manly NSW 2095, Australia (2018 - 2023)",
+      mobile: "+61 498 765 432",
+      email: "alice.smith@email.com",
       idType: "Driver License",
       idNumber: "DL-9988776"
     },
@@ -217,11 +246,17 @@ export const initialClients: Client[] = [
     progress: 100,
     notes: "Requires LMI waiver review.",
     profile: {
+      fullLegalName: "John Alexander Doe",
       dob: "1994-04-15",
-      mobile: "+61 412 345 678",
-      address: "102/45 Glen St, Glen Waverley VIC 3150, Australia",
-      civilStatus: "Single",
+      placeOfBirth: "Melbourne, Australia",
       nationality: "Australian",
+      civilStatus: "Single",
+      numberOfDependents: 0,
+      residentialAddress: "102/45 Glen St, Glen Waverley VIC 3150, Australia",
+      address: "102/45 Glen St, Glen Waverley VIC 3150, Australia",
+      previousAddress: "88 Station Rd, Box Hill VIC 3128, Australia (2020 - 2024)",
+      mobile: "+61 412 345 678",
+      email: "john.doe@email.com",
       idType: "Passport",
       idNumber: "N-4422551"
     },
@@ -288,11 +323,17 @@ export const initialClients: Client[] = [
     progress: 95,
     notes: "Pre-approval sought for Sydney inner west property.",
     profile: {
+      fullLegalName: "Michael Edward Brown",
       dob: "1979-08-30",
-      mobile: "+61 422 555 111",
-      address: "18 Belmont Rd, Mosman NSW 2088, Australia",
-      civilStatus: "Married",
+      placeOfBirth: "Brisbane, Australia",
       nationality: "Australian",
+      civilStatus: "Married",
+      numberOfDependents: 3,
+      residentialAddress: "18 Belmont Rd, Mosman NSW 2088, Australia",
+      address: "18 Belmont Rd, Mosman NSW 2088, Australia",
+      previousAddress: "5 Military Rd, Neutral Bay NSW 2089, Australia (2015 - 2021)",
+      mobile: "+61 422 555 111",
+      email: "michael.b@email.com",
       idType: "Driver License",
       idNumber: "DL-1122334"
     },
@@ -359,11 +400,17 @@ export const initialClients: Client[] = [
     progress: 40,
     notes: "Awaiting final builder contract and specs.",
     profile: {
+      fullLegalName: "Emma Rose Wilson",
       dob: "1991-05-22",
-      mobile: "+63 917 123 4567",
-      address: "Block 15 Lot 4, Park Place, Alabang, Muntinlupa, Philippines",
-      civilStatus: "Single",
+      placeOfBirth: "Manila, Philippines",
       nationality: "Filipino",
+      civilStatus: "Single",
+      numberOfDependents: 0,
+      residentialAddress: "Block 15 Lot 4, Park Place, Alabang, Muntinlupa, Philippines",
+      address: "Block 15 Lot 4, Park Place, Alabang, Muntinlupa, Philippines",
+      previousAddress: "Unit 402, Sunset Towers, Makati City, Philippines (2020 - 2024)",
+      mobile: "+63 917 123 4567",
+      email: "emma.w@email.com",
       idType: "UMID ID",
       idNumber: "UMID-88771"
     },
@@ -385,17 +432,50 @@ export const initialClients: Client[] = [
       otherIncome: 0
     },
     obligations: {
-      hasExistingLoans: "No",
-      existingLoanAmount: 0,
-      monthlyDebtPayments: 0,
-      numExistingLoans: 0
+      hasExistingLoans: "Yes",
+      existingLoanAmount: 37000,
+      monthlyDebtPayments: 850,
+      numExistingLoans: 2,
+      items: [
+        {
+          liabilityType: "Personal Vehicle Loan",
+          creditor: "BDO Unibank / Auto Finance",
+          outstandingBalance: 22000,
+          monthlyPayment: 450,
+          interestRate: "6.25% p.a.",
+          loanTerm: "5 Years",
+          remainingTerm: "2 Years 4 Months",
+          paymentStatus: "Current"
+        },
+        {
+          liabilityType: "Revolving Credit Card Line",
+          creditor: "BPI Commercial Bank",
+          outstandingBalance: 15000,
+          monthlyPayment: 400,
+          interestRate: "18.50% p.a.",
+          loanTerm: "Revolving",
+          remainingTerm: "Ongoing",
+          paymentStatus: "Current"
+        }
+      ]
     },
     collateral: {
       hasCollateral: "Yes",
-      collateralType: "Owned Land Lot",
-      estimatedValue: 180000,
+      collateralType: "Residential Land & Dwelling Lot",
+      description: "4-Bedroom Modern Architectural Villa Lot located in Prime Alabang Estate with gated security.",
+      estimatedValue: 350000,
+      appraisedValue: 340000,
+      location: "Block 15 Lot 4, Park Place, Alabang, Muntinlupa, Philippines",
       ownership: "Sole Owner",
-      existingMortgage: "No"
+      condition: "Excellent - Pre-Construction / Cleared Land Lot",
+      existingMortgage: "No Encumbrance",
+      requiredDocuments: [
+        "Original Transfer Certificate of Title (TCT)",
+        "Property Tax Declaration & Tax Clearance Receipt",
+        "Certified Bureau of Lands Lot Plan & Vicinity Map",
+        "Certified Real Estate Appraisal Report",
+        "Comprehensive Property & Fire Insurance Policy"
+      ]
     },
     documents: {
       governmentId: "Verified",
@@ -430,11 +510,17 @@ export const initialClients: Client[] = [
     progress: 75,
     notes: "LTV exceeded maximum allowed for land loans.",
     profile: {
+      fullLegalName: "Sophia Maria Martinez",
       dob: "1983-02-18",
-      mobile: "+63 928 888 7777",
-      address: "12 Jasmine Rd, Dasmarinas Village, Makati, Philippines",
-      civilStatus: "Married",
+      placeOfBirth: "Cebu City, Philippines",
       nationality: "Filipino",
+      civilStatus: "Married",
+      numberOfDependents: 1,
+      residentialAddress: "12 Jasmine Rd, Dasmarinas Village, Makati, Philippines",
+      address: "12 Jasmine Rd, Dasmarinas Village, Makati, Philippines",
+      previousAddress: "45 Acacia Ave, Ayala Alabang, Muntinlupa, Philippines (2016 - 2022)",
+      mobile: "+63 928 888 7777",
+      email: "sophia.m@email.com",
       idType: "Passport",
       idNumber: "P-880091"
     },
@@ -501,11 +587,17 @@ export const initialClients: Client[] = [
     progress: 100,
     notes: "Settled successfully. Sent congrats email.",
     profile: {
+      fullLegalName: "David Christian Lee",
       dob: "1990-09-05",
-      mobile: "+61 433 999 888",
-      address: "56 Station Rd, Indooroopilly QLD 4068, Australia",
-      civilStatus: "Married",
+      placeOfBirth: "Perth, Australia",
       nationality: "Australian",
+      civilStatus: "Married",
+      numberOfDependents: 1,
+      residentialAddress: "56 Station Rd, Indooroopilly QLD 4068, Australia",
+      address: "56 Station Rd, Indooroopilly QLD 4068, Australia",
+      previousAddress: "12 Riverview Tce, Toowong QLD 4066, Australia (2019 - 2023)",
+      mobile: "+61 433 999 888",
+      email: "david.lee@email.com",
       idType: "Driver License",
       idNumber: "DL-8855221"
     },
@@ -560,7 +652,7 @@ export const initialClients: Client[] = [
     }
   },
   {
-    id: "c6",
+    id: "c6_2",
     name: "Michael Chang",
     email: "michael.chang@email.com",
     phone: "+61 412 345 678",
@@ -572,11 +664,17 @@ export const initialClients: Client[] = [
     progress: 95,
     notes: "Awaiting final title search from solicitor.",
     profile: {
+      fullLegalName: "Michael David Chang",
       dob: "1983-05-18",
-      mobile: "+61 412 345 678",
-      address: "12/88 Broadway, Ultimo NSW 2007, Australia",
-      civilStatus: "Single",
+      placeOfBirth: "Adelaide, Australia",
       nationality: "Australian",
+      civilStatus: "Single",
+      numberOfDependents: 0,
+      residentialAddress: "12/88 Broadway, Ultimo NSW 2007, Australia",
+      address: "12/88 Broadway, Ultimo NSW 2007, Australia",
+      previousAddress: "34 George St, Haymarket NSW 2000, Australia (2017 - 2022)",
+      mobile: "+61 412 345 678",
+      email: "michael.chang@email.com",
       idType: "Passport",
       idNumber: "PA-9988776"
     },
