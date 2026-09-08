@@ -17,6 +17,7 @@ import {
 import {
   bookingsApi,
   slotsApi,
+  usersApi,
   BookingApiResponse,
   PublishedSlot,
   parseSlotTime,
@@ -98,6 +99,32 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // --------------------------------------------------------------------------
+    // 1. Fetch live user profile from backend (/api/users/profile/)
+    // --------------------------------------------------------------------------
+    usersApi.getProfile()
+      .then((profile) => {
+        if (profile && (profile.full_name || profile.first_name || profile.last_name)) {
+          const resolvedFullName = profile.full_name || `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
+          setClient((prev) => ({
+            ...prev,
+            name: resolvedFullName || prev.name,
+            email: profile.email || prev.email,
+            profile: {
+              ...prev.profile,
+              fullLegalName: resolvedFullName || prev.profile?.fullLegalName || prev.name,
+              email: profile.email || prev.profile?.email || prev.email,
+            }
+          }));
+        }
+      })
+      .catch((err) => {
+        console.debug("Backend user profile endpoint not reachable or unauthorized, fallback to local state:", err);
+      });
+
+    // --------------------------------------------------------------------------
+    // 2. Fetch bookings and published slots
+    // --------------------------------------------------------------------------
     bookingsApi.list()
       .then((list) => {
         const mapped = list.map(apiBookingToBooking);

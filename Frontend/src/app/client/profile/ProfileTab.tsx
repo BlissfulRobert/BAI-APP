@@ -8,11 +8,12 @@
  * ==============================================================================
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { User, ShieldCheck, Landmark, Check, FileText, X, AlertCircle, Calendar, UploadCloud, Trash2, ArrowRight, Pen, Mail, Phone } from "lucide-react";
 import { Client, Booking, LiabilityItem } from "../../broker/MockData";
 import { dossierDocIcons } from "./dossierIcons";
+import { usersApi } from "@/lib/api";
 
 interface ProfileTabProps {
   client: Client;
@@ -89,6 +90,31 @@ export default function ProfileTab({ client, setClient, onLogAction }: ProfileTa
   const [editEmployer, setEditEmployer] = useState("");
   const [editPosition, setEditPosition] = useState("");
 
+  // ------------------------------------------------------------------------------
+  // 1D. FETCH BACKEND PROFILE ENDPOINT (/api/users/profile/)
+  // Reflects the authenticated client's full_name, email, and profile details
+  // ------------------------------------------------------------------------------
+  useEffect(() => {
+    usersApi.getProfile()
+      .then((profile) => {
+        if (profile && (profile.full_name || profile.first_name || profile.last_name)) {
+          const resolvedFullName = profile.full_name || `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
+          setClient(prev => ({
+            ...prev,
+            name: resolvedFullName || prev.name,
+            email: profile.email || prev.email,
+            profile: {
+              ...prev.profile,
+              fullLegalName: resolvedFullName || prev.profile?.fullLegalName || prev.name,
+              email: profile.email || prev.profile?.email || prev.email,
+            }
+          }));
+        }
+      })
+      .catch((err) => {
+        console.debug("Note: Could not reach /api/users/profile/ or unauthorized, using current client context:", err);
+      });
+  }, [setClient]);
 
   // ------------------------------------------------------------------------------
   // 2. THEME & PROFILE MODAL HANDLERS
@@ -122,10 +148,28 @@ export default function ProfileTab({ client, setClient, onLogAction }: ProfileTa
   };
 
   /**
-   * Saves updated client details to parent state and logs activity.
+   * Saves updated client details to parent state, calls PATCH /api/users/profile/,
+   * and logs the activity.
    */
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Split full name into first and last name for backend endpoint update
+    const nameParts = editFullLegalName.trim().split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
+    // 2. Update backend profile endpoint (PATCH /api/users/profile/)
+    try {
+      await usersApi.updateProfile({
+        first_name: firstName,
+        last_name: lastName
+      });
+    } catch (err) {
+      console.debug("Backend profile update skipped or offline:", err);
+    }
+
+    // 3. Update local state
     setClient(prev => ({
       ...prev,
       name: editFullLegalName,

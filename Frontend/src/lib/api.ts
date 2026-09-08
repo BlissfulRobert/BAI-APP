@@ -57,6 +57,30 @@ export const authApi = {
   me: () => request<AuthUser>("/api/auth/user/"),
 };
 
+export interface UserProfileResponse {
+  id: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  role: string;
+}
+
+export const usersApi = {
+  /**
+   * GET /api/users/profile/
+   * Fetches the current user's profile with computed full_name, first_name, last_name, email, and role.
+   */
+  getProfile: () => request<UserProfileResponse>("/api/users/profile/"),
+
+  /**
+   * PATCH /api/users/profile/
+   * Updates the current user's first_name and last_name.
+   */
+  updateProfile: (data: { first_name?: string; last_name?: string }) =>
+    request<UserProfileResponse>("/api/users/profile/", { method: "PATCH", json: data }),
+};
+
 export function getRoleRedirect(role: AuthUser["role"]): string {
   if (role === "client") return "/client";
   if (role === "broker") return "/broker";
